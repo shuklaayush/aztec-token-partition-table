@@ -25,8 +25,8 @@ global TOKEN_NOTE_LEN: Field = 3; // 3 plus a header.
 struct TokenNote {
     // the amount of tokens in the note
     amount: SafeU120,
-    // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note 
-    // can be privately spent. When nullifier secret and encryption private key is same 
+    // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note
+    // can be privately spent. When nullifier secret and encryption private key is same
     // we can simply use the owner for this one.
     owner: AztecAddress,
     // randomness of the note to hide contents.
@@ -62,7 +62,7 @@ impl TokenNote {
     pub fn compute_note_hash(self) -> Field {
         // TODO(#1205) Should use a non-zero generator index.
         pedersen_hash([
-            self.amount.value as Field, 
+            self.amount.value as Field,
             self.owner.address as Field,
             self.randomness,
         ],0)

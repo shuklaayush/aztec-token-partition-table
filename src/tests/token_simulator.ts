@@ -1,12 +1,16 @@
-import { TokenContract } from '../artifacts/Token.js';
-import { AztecAddress, DebugLogger } from '@aztec/aztec.js';
+import { TokenContract } from "../artifacts/Token.js";
+import { AztecAddress, DebugLogger } from "@aztec/aztec.js";
 
 export class TokenSimulator {
   private balancesPrivate: Map<AztecAddress, bigint> = new Map();
   private balancePublic: Map<AztecAddress, bigint> = new Map();
   public totalSupply: bigint = 0n;
 
-  constructor(protected token: TokenContract, protected logger: DebugLogger, protected accounts: AztecAddress[]) {}
+  constructor(
+    protected token: TokenContract,
+    protected logger: DebugLogger,
+    protected accounts: AztecAddress[]
+  ) {}
 
   public mintPrivate(amount: bigint) {
     this.totalSupply += amount;
@@ -80,12 +84,18 @@ export class TokenSimulator {
   }
 
   public async check() {
-    expect(await this.token.methods.total_supply().view()).toEqual(this.totalSupply);
+    expect(await this.token.methods.total_supply().view()).toEqual(
+      this.totalSupply
+    );
 
     // Check that all our public matches
     for (const address of this.accounts) {
-      expect(await this.token.methods.balance_of_public({ address }).view()).toEqual(this.balanceOfPublic(address));
-      expect(await this.token.methods.balance_of_private({ address }).view()).toEqual(this.balanceOfPrivate(address));
+      expect(
+        await this.token.methods.balance_of_public({ address }).view()
+      ).toEqual(this.balanceOfPublic(address));
+      expect(
+        await this.token.methods.balance_of_private({ address }).view()
+      ).toEqual(this.balanceOfPrivate(address));
     }
   }
 }

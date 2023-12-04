@@ -36,8 +36,8 @@ contract Token {
     // docs:start:import_authwit
     use dep::authwit::{
         auth::{
-            assert_current_call_valid_authwit, 
-            assert_current_call_valid_authwit_public, 
+            assert_current_call_valid_authwit,
+            assert_current_call_valid_authwit_public,
         },
     };
     // docs:end:import_authwit
