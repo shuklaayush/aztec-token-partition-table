@@ -53,7 +53,7 @@ impl BalanceSet {
   }
 
   unconstrained pub fn balance_of_with_offset(self: Self, offset: u32) -> SafeU120 {
-      // Same as SafeU120::new(0), but fewer constraints because no check.
+      // Same as SafeU120::new(0), but fewer constraints because no check. 
       let mut balance = SafeU120::min();
       // docs:start:view_notes
       let options = NoteViewerOptions::new().set_offset(offset);

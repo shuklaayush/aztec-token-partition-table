@@ -4,11 +4,11 @@ use dep::aztec::{
         note_interface::NoteInterface,
         utils::compute_note_hash_for_read_or_nullify,
     },
+    hash::pedersen_hash,
     context::PrivateContext,
     constants_gen::MAX_READ_REQUESTS_PER_CALL,
     state_vars::set::Set,
     log::emit_encrypted_log,
-    hash::pedersen_hash,
 };
 use dep::aztec::types::address::AztecAddress;
 use dep::aztec::oracle::{
@@ -16,6 +16,7 @@ use dep::aztec::oracle::{
     get_secret_key::get_secret_key,
     get_public_key::get_public_key,
 };
+
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
@@ -24,8 +25,8 @@ global TOKEN_NOTE_LEN: Field = 3; // 3 plus a header.
 struct TokenNote {
     // the amount of tokens in the note
     amount: SafeU120,
-    // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note
-    // can be privately spent. When nullifier secret and encryption private key is same
+    // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note 
+    // can be privately spent. When nullifier secret and encryption private key is same 
     // we can simply use the owner for this one.
     owner: AztecAddress,
     // randomness of the note to hide contents.
@@ -61,7 +62,7 @@ impl TokenNote {
     pub fn compute_note_hash(self) -> Field {
         // TODO(#1205) Should use a non-zero generator index.
         pedersen_hash([
-            self.amount.value as Field,
+            self.amount.value as Field, 
             self.owner.address as Field,
             self.randomness,
         ],0)
