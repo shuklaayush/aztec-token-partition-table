@@ -1,6 +1,17 @@
+use dep::aztec::types::AztecAddress;
+use dep::safe_math::SafeU120;
+
+global MAX_SHIELDS_LEN: Field = 3;
+global MAX_ATTESTATIONS_LEN: Field = 3;
+
+struct Shield {
+    shieldId: u32,
+    value: SafeU120,
+}
+
 struct PartitionTable {
-    shields: Vec<Shield>,
-    attestations: Vec<Attestation>,
+    shields: Vec<Shield>, // Stores the shield deposit IDs
+    attestations: Vec<AztecAddress>, // Stores the attestations collected
     block_number_min: Field,
     is_table_cleared: bool,
 }
@@ -16,7 +27,7 @@ impl PartitionTable {
     }
 
     pub fn empty() -> Self {
-        NoteHeader {
+        ParitionTable {
             contract_address: 0,
             nonce: 0,
             storage_slot: 0,

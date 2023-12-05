@@ -183,6 +183,7 @@ contract Token {
         assert(storage.minters.at(context.msg_sender()).read(), "caller is not minter");
         let pending_shields = storage.pending_shields;
         let mut note = TransparentNote::new(amount, secret_hash);
+        // TODO: Add shieldId
         let supply = storage.total_supply.read().add(SafeU120::new(amount));
 
         storage.total_supply.write(supply);
@@ -283,6 +284,7 @@ contract Token {
         let note = notes[0].unwrap_unchecked();
         pending_shields.remove(note);
 
+        // TODO: Add shieldId
         storage.balances.at(to).add(SafeU120::new(amount));
 
         1
@@ -303,6 +305,7 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
+        // TODO: Check attestations
         storage.balances.at(from).sub(SafeU120::new(amount));
 
         let selector = compute_selector("_increase_public_balance((Field),Field)");
@@ -327,6 +330,7 @@ contract Token {
         }
 
         let amount = SafeU120::new(amount);
+        // TODO: Partition table join-split
         storage.balances.at(from).sub(amount);
         storage.balances.at(to).add(amount);
 
@@ -355,6 +359,25 @@ contract Token {
         1
     }
     // docs:end:burn
+
+    // TODO: Where do I get `note` from?
+    // Maybe
+    // function attest
+    // define unconstrained function that returns:
+    // bool -> do we have more unattested notes
+    // note -> a note that requires attestation
+    // * get attestation on `note`
+    // if `unattested_notes = true` call `attest`
+    #[aztec(private)]
+    fn request_attestation(note: TokenNote, attestor: AztecAddress) -> bool {
+
+    }
+
+    // TODO: Where do I get `note` from?
+    #[aztec(private)]
+    fn has_attestation(note: TokenNote, attestors: [AztecAddress]) -> bool {
+
+    }
 
     // docs:start:initialize
     #[aztec(public)]
