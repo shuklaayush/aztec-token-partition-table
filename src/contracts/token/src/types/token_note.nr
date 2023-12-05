@@ -29,6 +29,8 @@ struct TokenNote {
     // can be privately spent. When nullifier secret and encryption private key is same
     // we can simply use the owner for this one.
     owner: AztecAddress,
+    // partition table storing merkle hash of the deposit ids contributing to a note
+    partition_table: PartitionTable,
     // randomness of the note to hide contents.
     randomness: Field,
     // the note header (contract_address, nonce, storage_slot)

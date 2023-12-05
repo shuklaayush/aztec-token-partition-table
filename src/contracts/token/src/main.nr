@@ -66,6 +66,8 @@ contract Token {
         pending_shields: Set<TransparentNote, TRANSPARENT_NOTE_LEN>,
         // docs:end:storage_pending_shields
         public_balances: Map<PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>>,
+        // total number of shielded notes
+        num_shields: PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>,
     }
     // docs:end:storage_struct
 
