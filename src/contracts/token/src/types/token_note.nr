@@ -20,6 +20,8 @@ use dep::aztec::oracle::{
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
+use crate::types::partition_table::{PartitionTable, MAX_SHIELD_IDS_LEN};
+
 global TOKEN_NOTE_LEN: Field = 3; // 3 plus a header.
 
 struct TokenNote {
@@ -29,22 +31,24 @@ struct TokenNote {
     // can be privately spent. When nullifier secret and encryption private key is same
     // we can simply use the owner for this one.
     owner: AztecAddress,
-    // partition table storing merkle hash of the deposit ids contributing to a note
-    partition_table: PartitionTable,
     // randomness of the note to hide contents.
     randomness: Field,
     // the note header (contract_address, nonce, storage_slot)
     // included in the note such that it becomes part of encrypted logs for later use.
     header: NoteHeader,
+    // TODO
+    // partition table storing merkle hash of the deposit ids contributing to a note
+    partition_table: PartitionTable,
 }
 
 impl TokenNote {
-    pub fn new(amount: SafeU120, owner: AztecAddress) -> Self {
+    pub fn new(amount: SafeU120, owner: AztecAddress, shield_ids: [u32; MAX_SHIELD_IDS_LEN]) -> Self {
         Self {
             amount,
             owner,
             randomness: rand(),
             header: NoteHeader::empty(),
+            partition_table: PartitionTable::new(shield_ids),
         }
     }
 
@@ -58,6 +62,8 @@ impl TokenNote {
             owner: AztecAddress::new(serialized_note[1]),
             randomness: serialized_note[2],
             header: NoteHeader::empty(),
+            // TODO
+            partition_table: PartitionTable::empty(),
         }
     }
 
@@ -100,7 +106,7 @@ impl TokenNote {
               self.serialize(),
           );
       }
-  }
+    }
 }
 
 fn deserialize(serialized_note: [Field; TOKEN_NOTE_LEN]) -> TokenNote {

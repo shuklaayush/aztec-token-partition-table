@@ -23,6 +23,7 @@ use dep::aztec::oracle::{
 };
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
+use crate::types::partition_table::MAX_SHIELD_IDS_LEN;
 
 // A set implementing standard manipulation of balances.
 // Does not require spending key, but only knowledge.
@@ -70,23 +71,58 @@ impl BalanceSet {
       }
 
       balance
-  }
+    }
+  
+    unconstrained fn last_unattested_note(self: Self, attestor: AztecAddress) -> Option<TokenNote> {
+      let options = NoteViewerOptions::new().set_offset(0);
+      let opt_notes = self.set.view_notes(options);
+      let len = opt_notes.len();
+      let mut selected = Option::none();
+      for i in 0..len {
+          if opt_notes[i].is_some() {
+            if opt_notes[i].unwrap_unchecked().partition_table.attestations.contains(attestor) {
+              selected = Option::some(opt_notes[i].unwrap_unchecked());
+            }
+          }
+      }
+      selected
+    }
 
-    pub fn add(self: Self, addend: SafeU120) {
-        let mut addend_note = TokenNote::new(addend, self.owner);
+    unconstrained fn has_attestation(self: Self, attestor: AztecAddress) -> bool {
+      let options = NoteViewerOptions::new().set_offset(0);
+      let opt_notes = self.set.view_notes(options);
+      let len = opt_notes.len();
+      let mut res = false;
+      for i in 0..len {
+          if opt_notes[i].is_some() {
+            for j in 0..opt_notes[i].unwrap_unchecked().partition_table.attestations.len() {
+              if opt_notes[i].unwrap_unchecked().partition_table.attestations[j].contains(attestor) {
+                res = true;
+              }
+            }
+          }
+      }
+      res
+    }
+
+    pub fn add(self: Self, addend: SafeU120, shield_ids: [u32; MAX_SHIELD_IDS_LEN]) {
+        let mut addend_note = TokenNote::new(addend, self.owner, shield_ids);
 
         // docs:start:insert
         self.set.insert(&mut addend_note, true);
         // docs:end:insert
     }
 
-    pub fn sub(self: Self, subtrahend: SafeU120) {
+    // TODO: Proper return
+    pub fn sub(self: Self, subtrahend: SafeU120) -> [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL] {
         // docs:start:get_notes
         let options = NoteGetterOptions::with_filter(filter_notes_min_sum, subtrahend);
         let maybe_notes = self.set.get_notes(options);
         // docs:end:get_notes
 
         let mut minuend: SafeU120 = SafeU120::min();
+        let mut shield_ids = [0; MAX_SHIELD_IDS_LEN];
+        let mut shield_ids_len = 0;
         for i in 0..maybe_notes.len() {
             if maybe_notes[i].is_some() {
                 let note = maybe_notes[i].unwrap_unchecked();
@@ -99,6 +135,12 @@ impl BalanceSet {
                 self.set.remove(note);
                 // docs:end:remove
 
+                // TODO: Create a helper extend function for custom array/vec struct.
+                for j in 0..note.partition_table.shield_ids.len() {
+                    shield_ids[shield_ids_len] = note.partition_table.shield_ids[j];
+                    shield_ids_len += 1;
+                }
+
                 minuend = minuend.add(note.amount);
             }
         }
@@ -108,11 +150,17 @@ impl BalanceSet {
         // without the == true, it includes 'minuend.ge(subtrahend)' as part of the error.
         assert(minuend.ge(subtrahend) == true, "Balance too low");
 
-        self.add(minuend.sub(subtrahend));
+        // TODO: Should this just be shield_ids in last node?
+        self.add(minuend.sub(subtrahend), last_shield_ids);
+        
+        shield_ids
     }
 }
 
-pub fn filter_notes_min_sum(notes: [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL], min_sum: SafeU120) -> [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL] {
+pub fn filter_notes_min_sum(
+    notes: [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL],
+    min_sum: SafeU120
+) -> [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL] {
     let mut selected = [Option::none(); MAX_READ_REQUESTS_PER_CALL];
     let mut sum = SafeU120::min();
     for i in 0..notes.len() {
