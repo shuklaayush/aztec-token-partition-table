@@ -27,6 +27,7 @@ contract Token {
         types::type_serialization::{
             field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
+            u32_serialization::{U32SerializationMethods, U32_SERIALIZED_LEN},
             aztec_address_serialization::{AztecAddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
         },
         types::address::{AztecAddress},
@@ -71,7 +72,7 @@ contract Token {
         // docs:end:storage_pending_shields
         public_balances: Map<PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>>,
         // total number of shielded notes
-        shields_counter: PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>,
+        shields_counter: PublicState<u32, U32_SERIALIZED_LEN>,
     }
     // docs:end:storage_struct
 
@@ -259,11 +260,13 @@ contract Token {
         let note = notes[0].unwrap_unchecked();
         pending_shields.remove(note);
 
-        // TODO: Counter starts at 1
-        storage.shield_counter.add(SafeU120::new(1));
-        let shields_ids = [0; MAX_SHIELD_IDS_LEN];
-        shields_ids[0] = storage.shield_counter;
-        storage.balances.at(to).add(SafeU120::new(amount), shield_ids);
+        let counter = storage.shields_counter.read() + 1;
+
+        let mut shields_ids = [0; MAX_SHIELD_IDS_LEN];
+        shields_ids[0] = counter;
+        storage.balances.at(to).add(SafeU120::new(amount), shields_ids);
+
+        storage.shields_counter.write(counter);
 
         1
     }
@@ -333,7 +336,10 @@ contract Token {
     // 2. If yes, how? Can I transfer a particular note?
     #[aztec(private)]
     fn request_attestation(attestor: AztecAddress) -> bool {
-        let note = storage.balances.last_unattested_note(attestor);
+        // TODO: Should this be an argument?
+        let from = AztecAddress::new(context.msg_sender());
+
+        let note = storage.balances.at(from).last_unattested_note(attestor);
         let mut res = false;
         if note.is_some() {
             res = Attestor::at(attestor).request_attestation(note.partition_table);
@@ -348,7 +354,10 @@ contract Token {
     //       Change to list of attestors
     #[aztec(private)]
     fn has_attestation(attestor: AztecAddress) -> bool {
-        storage.balances.has_attestation(attestor)
+        // TODO: Should this be an argument?
+        let from = AztecAddress::new(context.msg_sender());
+
+        storage.balances.at(from).has_attestation(attestor)
     }
 
     // docs:start:initialize

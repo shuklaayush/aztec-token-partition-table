@@ -37,7 +37,7 @@ impl PartitionTable {
         }
     }
 
-    pub check_non_intersection(&self, other: &Self) -> bool {
+    pub fn check_non_intersection(&self, other: &Self) -> bool {
         let mut res = true;
         for i in 0..MAX_SHIELDS_LEN {
             for j in 0..MAX_SHIELDS_LEN {
