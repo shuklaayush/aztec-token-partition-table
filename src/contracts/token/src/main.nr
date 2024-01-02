@@ -43,9 +43,6 @@ contract Token {
     };
     // docs:end:import_authwit
 
-    // TODO
-    // use dep::attestor::Attestor;
-
     use crate::types::{
         transparent_note::{TransparentNote, TransparentNoteMethods, TRANSPARENT_NOTE_LEN},
         token_note::{TokenNote, TokenNoteMethods, TOKEN_NOTE_LEN},
@@ -183,7 +180,6 @@ contract Token {
         assert(storage.minters.at(context.msg_sender()).read(), "caller is not minter");
         let pending_shields = storage.pending_shields;
         let mut note = TransparentNote::new(amount, secret_hash);
-        // TODO: Add shieldId
         let supply = storage.total_supply.read().add(SafeU120::new(amount));
 
         storage.total_supply.write(supply);
@@ -348,7 +344,9 @@ contract Token {
     //     let note = storage.balances.at(from).last_unattested_note(attestor);
     //     let mut res = false;
     //     if note.is_some() {
-    //         res = Attestor::at(attestor).request_attestation(note.partition_table);
+    //         // TODO: Abstract to interfaces.nr and use proper selector here
+    //         let selector = compute_selector("request_attestation([u32;4])");
+    //         res = context.call_private_function(attestor.address, selector, [note.unwrap_unchecked().partition_table.shield_ids]);
     //     }
     //     if res {
     //         note.parition_table.add_attestation(attestor);

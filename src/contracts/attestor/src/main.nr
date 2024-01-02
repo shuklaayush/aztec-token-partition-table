@@ -76,7 +76,8 @@ contract Attestor {
     // }
 
     #[aztec(private)]
-    fn request_attestation(token_address: AztecAddress, partition_table: [u32; MAX_SHIELD_IDS_LEN]) -> bool {
+    fn request_attestation(partition_table: [u32; MAX_SHIELD_IDS_LEN]) -> bool {
+        let token_address = AztecAddress::new(context.msg_sender());
         // TODO: Use merkle tree intersection/non-intersection check
         let mut res = true;
         for i in 0..partition_table.len() {

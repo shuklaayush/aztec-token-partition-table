@@ -111,7 +111,7 @@ impl BalanceSet {
         // docs:end:insert
     }
 
-    // TODO: Return notes to broadcast attestations for
+    // TODO: Should return notes to broadcast attestations for
     pub fn sub(self: Self, subtrahend: SafeU120) -> [u32; MAX_SHIELD_IDS_LEN] {
         // docs:start:get_notes
         let options = NoteGetterOptions::with_filter(filter_notes_min_sum, subtrahend);

@@ -47,8 +47,8 @@ impl TokenNote {
             amount,
             owner,
             randomness: rand(),
-            header: NoteHeader::empty(),
             partition_table: PartitionTable::new(shield_ids),
+            header: NoteHeader::empty(),
         }
     }
 
@@ -71,19 +71,16 @@ impl TokenNote {
             amount: SafeU120::new(serialized_note[0]),
             owner: AztecAddress::new(serialized_note[1]),
             randomness: serialized_note[2],
-            header: NoteHeader::empty(),
             // TODO
             partition_table: PartitionTable::empty(),
+            header: NoteHeader::empty(),
         }
     }
 
     pub fn compute_note_hash(self) -> Field {
+        let serialized_note = self.serialize();
         // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash([
-            self.amount.value as Field,
-            self.owner.address as Field,
-            self.randomness,
-        ],0)
+        pedersen_hash(serialized_note, 0)
     }
 
     // docs:start:nullifier

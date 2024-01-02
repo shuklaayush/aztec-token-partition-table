@@ -1,6 +1,7 @@
 use dep::aztec::types::address::AztecAddress;
 use dep::safe_math::SafeU120;
 
+// TODO: Better names
 global MAX_SHIELD_IDS_LEN: Field = 10;
 global MAX_ATTESTATIONS_LEN: Field = 10;
 
@@ -17,7 +18,7 @@ struct PartitionTable {
     // TODO: Change to struct. Can I use vec?
     shield_ids: [u32; MAX_SHIELD_IDS_LEN], // Stores the origin shield deposit IDs
     attestations: [AztecAddress; MAX_ATTESTATIONS_LEN], // Stores the attestations collected
-    block_number_min: Field,
+    max_block_number: Field, // The older the block number, the less risky the shield is
     is_table_cleared: bool,
 }
 
@@ -26,7 +27,7 @@ impl PartitionTable {
         Self {
             shield_ids: shield_ids,
             attestations: [AztecAddress::new(0); MAX_ATTESTATIONS_LEN],
-            block_number_min: 0,
+            max_block_number: 0,
             is_table_cleared: false,
         }
     }
@@ -35,7 +36,7 @@ impl PartitionTable {
         Self {
             shield_ids: [0; MAX_SHIELD_IDS_LEN],
             attestations: [AztecAddress::new(0); MAX_ATTESTATIONS_LEN],
-            block_number_min: 0,
+            max_block_number: 0,
             is_table_cleared: false,
         }
     }
@@ -63,7 +64,7 @@ impl PartitionTable {
             res[i + offset] = self.attestations[i + offset].address;
         }
         offset += MAX_ATTESTATIONS_LEN;
-        res[offset] = self.block_number_min;
+        res[offset] = self.max_block_number;
         offset += 1;
         res[offset] = self.is_table_cleared as Field;
         
