@@ -4,6 +4,9 @@ use dep::safe_math::SafeU120;
 global MAX_SHIELD_IDS_LEN: Field = 10;
 global MAX_ATTESTATIONS_LEN: Field = 10;
 
+// TODO: No hardcode
+global PARTITION_TABLE_LEN: Field = 22;
+
 // struct Shield {
 //     shield_id: u32,
 //     value: SafeU120,
@@ -46,6 +49,24 @@ impl PartitionTable {
                 }
             }
         }
+        res
+    }
+    
+    pub fn serialize(self) -> [Field; PARTITION_TABLE_LEN] {
+        let mut res = [0 as Field; PARTITION_TABLE_LEN];
+        let mut offset = 0;
+        for i in 0..MAX_SHIELD_IDS_LEN {
+            res[i + offset] = self.shield_ids[i] as Field;
+        }
+        offset += MAX_SHIELD_IDS_LEN;
+        for i in 0..MAX_ATTESTATIONS_LEN {
+            res[i + offset] = self.attestations[i + offset].address;
+        }
+        offset += MAX_ATTESTATIONS_LEN;
+        res[offset] = self.block_number_min;
+        offset += 1;
+        res[offset] = self.is_table_cleared as Field;
+        
         res
     }
 }

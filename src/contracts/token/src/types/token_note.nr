@@ -22,7 +22,7 @@ use dep::std::option::Option;
 
 use crate::types::partition_table::{PartitionTable, MAX_SHIELD_IDS_LEN};
 
-global TOKEN_NOTE_LEN: Field = 3; // 3 plus a header.
+global TOKEN_NOTE_LEN: Field = 25; // 3 plus 22 (PT) and a header.
 
 struct TokenNote {
     // the amount of tokens in the note
@@ -33,12 +33,12 @@ struct TokenNote {
     owner: AztecAddress,
     // randomness of the note to hide contents.
     randomness: Field,
-    // the note header (contract_address, nonce, storage_slot)
-    // included in the note such that it becomes part of encrypted logs for later use.
-    header: NoteHeader,
     // TODO
     // partition table storing merkle hash of the deposit ids contributing to a note
     partition_table: PartitionTable,
+    // the note header (contract_address, nonce, storage_slot)
+    // included in the note such that it becomes part of encrypted logs for later use.
+    header: NoteHeader,
 }
 
 impl TokenNote {
@@ -53,7 +53,17 @@ impl TokenNote {
     }
 
     pub fn serialize(self) -> [Field; TOKEN_NOTE_LEN] {
-        [self.amount.value as Field, self.owner.address, self.randomness]
+        let mut serialized_note = [0; TOKEN_NOTE_LEN];
+        serialized_note[0] = self.amount.value as Field;
+        serialized_note[1] = self.owner.address;
+        serialized_note[2] = self.randomness;
+
+        let partition_table_serialized = self.partition_table.serialize();
+        for i in 0..partition_table_serialized.len() {
+            serialized_note[i + 3] = partition_table_serialized[i];
+        }
+        
+        serialized_note
     }
 
     pub fn deserialize(serialized_note: [Field; TOKEN_NOTE_LEN]) -> Self {
