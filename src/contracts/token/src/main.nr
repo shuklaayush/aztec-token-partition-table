@@ -43,7 +43,8 @@ contract Token {
     };
     // docs:end:import_authwit
 
-    use dep::attestor::Attestor;
+    // TODO
+    // use dep::attestor::Attestor;
 
     use crate::types::{
         transparent_note::{TransparentNote, TransparentNoteMethods, TRANSPARENT_NOTE_LEN},
@@ -78,7 +79,7 @@ contract Token {
 
     // docs:start:storage_init
     impl Storage {
-        fn init(context: Context) -> pub Self {
+        fn init(context: Context) -> Self {
             Storage {
                 // docs:start:storage_admin_init
                 admin: PublicState::new(
@@ -119,6 +120,11 @@ contract Token {
                             SafeU120SerializationMethods,
                         )
                     },
+                ),
+                shields_counter: PublicState::new(
+                    context,
+                    7,
+                    U32SerializationMethods,
                 ),
             }
         }
@@ -281,8 +287,8 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
-        // TODO: Broadcast attestations
-        let notes = storage.balances.at(from).sub(SafeU120::new(amount));
+        // TODO: Broadcast attestations by returning notes here
+        storage.balances.at(from).sub(SafeU120::new(amount));
 
         let selector = compute_selector("_increase_public_balance((Field),Field)");
         let _void = context.call_public_function(context.this_address(), selector, [to.address, amount]);
@@ -334,21 +340,21 @@ contract Token {
     // QUESTIONS
     // 1. Do I have access to individual notes? 
     // 2. If yes, how? Can I transfer a particular note?
-    #[aztec(private)]
-    fn request_attestation(attestor: AztecAddress) -> bool {
-        // TODO: Should this be an argument?
-        let from = AztecAddress::new(context.msg_sender());
+    // #[aztec(private)]
+    // fn request_attestation(attestor: AztecAddress) -> bool {
+    //     // TODO: Should this be an argument?
+    //     let from = AztecAddress::new(context.msg_sender());
 
-        let note = storage.balances.at(from).last_unattested_note(attestor);
-        let mut res = false;
-        if note.is_some() {
-            res = Attestor::at(attestor).request_attestation(note.partition_table);
-        }
-        if res {
-            note.parition_table.add_attestation(attestor);
-        }
-        res
-    }
+    //     let note = storage.balances.at(from).last_unattested_note(attestor);
+    //     let mut res = false;
+    //     if note.is_some() {
+    //         res = Attestor::at(attestor).request_attestation(note.partition_table);
+    //     }
+    //     if res {
+    //         note.parition_table.add_attestation(attestor);
+    //     }
+    //     res
+    // }
 
     // TODO: Where do I get `note` from?
     //       Change to list of attestors

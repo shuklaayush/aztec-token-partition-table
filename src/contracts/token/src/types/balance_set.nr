@@ -80,9 +80,10 @@ impl BalanceSet {
       let mut selected = Option::none();
       for i in 0..len {
           if opt_notes[i].is_some() {
-            if opt_notes[i].unwrap_unchecked().partition_table.attestations.contains(attestor) {
-              selected = Option::some(opt_notes[i].unwrap_unchecked());
-            }
+              let attestations = opt_notes[i].unwrap_unchecked().partition_table.attestations;
+              if contains(attestations, attestor) {
+                  selected = Option::some(opt_notes[i].unwrap_unchecked());
+              }
           }
       }
       selected
@@ -95,11 +96,8 @@ impl BalanceSet {
       let mut res = false;
       for i in 0..len {
           if opt_notes[i].is_some() {
-            for j in 0..opt_notes[i].unwrap_unchecked().partition_table.attestations.len() {
-              if opt_notes[i].unwrap_unchecked().partition_table.attestations[j].contains(attestor) {
-                res = true;
-              }
-            }
+              let attestations = opt_notes[i].unwrap_unchecked().partition_table.attestations;
+              res = contains(attestations, attestor);
           }
       }
       res
@@ -113,8 +111,8 @@ impl BalanceSet {
         // docs:end:insert
     }
 
-    // TODO: Proper return
-    pub fn sub(self: Self, subtrahend: SafeU120) -> [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL] {
+    // TODO: Return notes to broadcast attestations for
+    pub fn sub(self: Self, subtrahend: SafeU120) -> [u32; MAX_SHIELD_IDS_LEN] {
         // docs:start:get_notes
         let options = NoteGetterOptions::with_filter(filter_notes_min_sum, subtrahend);
         let maybe_notes = self.set.get_notes(options);
@@ -122,6 +120,7 @@ impl BalanceSet {
 
         let mut minuend: SafeU120 = SafeU120::min();
         let mut shield_ids = [0; MAX_SHIELD_IDS_LEN];
+        let mut last_shield_ids = [0; MAX_SHIELD_IDS_LEN];
         let mut shield_ids_len = 0;
         for i in 0..maybe_notes.len() {
             if maybe_notes[i].is_some() {
@@ -137,6 +136,7 @@ impl BalanceSet {
 
                 // TODO: Create a helper extend function for custom array/vec struct.
                 for j in 0..note.partition_table.shield_ids.len() {
+                    last_shield_ids[j] = note.partition_table.shield_ids[j];
                     shield_ids[shield_ids_len] = note.partition_table.shield_ids[j];
                     shield_ids_len += 1;
                 }
@@ -171,4 +171,18 @@ pub fn filter_notes_min_sum(
         }
     }
     selected
+}
+
+// TODO: Unconstrained
+pub fn contains<N>(
+    arr: [AztecAddress; N],
+    addr: AztecAddress
+) -> bool {
+    let mut res = false;
+    for i in 0..arr.len() {
+        if arr[i].eq(addr) {
+            res = true;
+        }
+    }
+    res
 }

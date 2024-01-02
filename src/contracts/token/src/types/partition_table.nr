@@ -1,11 +1,11 @@
 use dep::aztec::types::address::AztecAddress;
 use dep::safe_math::SafeU120;
 
-global MAX_SHIELD_IDS_LEN: Field = 3;
-global MAX_ATTESTATIONS_LEN: Field = 3;
+global MAX_SHIELD_IDS_LEN: Field = 10;
+global MAX_ATTESTATIONS_LEN: Field = 10;
 
 // struct Shield {
-//     shieldId: u32,
+//     shield_id: u32,
 //     value: SafeU120,
 // }
 
@@ -20,28 +20,28 @@ struct PartitionTable {
 
 impl PartitionTable {
     pub fn new(shield_ids: [u32; MAX_SHIELD_IDS_LEN]) -> Self {
-        ParitionTable {
+        Self {
             shield_ids: shield_ids,
-            attestations: [AztecAddress::zero(); MAX_ATTESTATIONS_LEN],
+            attestations: [AztecAddress::new(0); MAX_ATTESTATIONS_LEN],
             block_number_min: 0,
             is_table_cleared: false,
         }
     }
 
     pub fn empty() -> Self {
-        ParitionTable {
-            shields: [],
-            attestations: [],
+        Self {
+            shield_ids: [0; MAX_SHIELD_IDS_LEN],
+            attestations: [AztecAddress::new(0); MAX_ATTESTATIONS_LEN],
             block_number_min: 0,
             is_table_cleared: false,
         }
     }
 
-    pub fn check_non_intersection(&self, other: &Self) -> bool {
+    pub fn check_non_intersection(self, other: Self) -> bool {
         let mut res = true;
-        for i in 0..MAX_SHIELDS_LEN {
-            for j in 0..MAX_SHIELDS_LEN {
-                if self.shields[i].shieldId == other.shields[j].shieldId {
+        for i in 0..MAX_SHIELD_IDS_LEN {
+            for j in 0..MAX_SHIELD_IDS_LEN {
+                if self.shield_ids[i] == other.shield_ids[j] {
                     res = false;
                 }
             }
