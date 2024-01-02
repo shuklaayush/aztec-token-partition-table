@@ -33,10 +33,10 @@
     "rootDir": "./src"
   },
   "dependencies": {
-    "@aztec/aztec.js": "^0.16.1",
-    "@aztec/circuits.js": "^0.16.1",
-    "@aztec/foundation": "^0.16.1",
-    "@aztec/types": "^0.16.1"
+    "@aztec/aztec.js": "0.16.9",
+    "@aztec/circuits.js": "0.16.9",
+    "@aztec/foundation": "0.16.9",
+    "@aztec/types": "0.16.9"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
@@ -50,6 +50,10 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   },
-  "files": ["dest", "src", "!*.test.*"],
+  "files": [
+    "dest",
+    "src",
+    "!*.test.*"
+  ],
   "types": "./dest/index.d.ts"
 }
