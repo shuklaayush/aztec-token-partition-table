@@ -8,6 +8,7 @@
 //       The request_attestation method requires a set-non-intersection check that is of independent interest and should be implemented as a 3rd party library.
 
 mod types;
+mod utils;
 
 contract Attestor {
     use dep::aztec::{
@@ -24,6 +25,7 @@ contract Attestor {
     };
     
     use crate::types::blacklist_note::{BlacklistNote, BlacklistNoteMethods, BLACKLIST_NOTE_LEN};
+    use crate::utils::{MAX_SHIELD_IDS_LEN, contains};
 
     struct Storage {
         admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
@@ -73,10 +75,18 @@ contract Attestor {
     //     storage.blacklisted.at(shield_id as Field).write(false);
     // }
 
-    // #[aztec(private)]
-    // fn request_attestation(table: PartitionTable, attestor: AztecAddress) -> bool {
-    //     // TODO: Do a non-intersection check between the partition table and the blacklist
-    // }
+    #[aztec(private)]
+    fn request_attestation(token_address: AztecAddress, partition_table: [u32; MAX_SHIELD_IDS_LEN]) -> bool {
+        // TODO: Use merkle tree intersection/non-intersection check
+        let mut res = true;
+        for i in 0..partition_table.len() {
+            let note = storage.blacklisted.at(token_address.address).get_note(false);
+            if contains(note.shield_ids, partition_table[i]) {
+                res = false;
+            }
+        }
+        res
+    }
 
     // TODO 
     unconstrained fn compute_note_hash_and_nullifier(

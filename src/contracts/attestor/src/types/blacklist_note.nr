@@ -13,14 +13,14 @@ use dep::aztec::oracle::{
     get_public_key::get_public_key,
 };
 
-global MAX_SHIELD_IDS_LEN: Field = 10;
+global MAX_BLACKLIST_LEN: Field = 10;
 // TODO: No hardcode
 global BLACKLIST_NOTE_LEN: Field = 11;
 
 struct BlacklistNote {
     count: u32,
     // TODO: Change to indexed merkle root
-    shield_ids: [u32; MAX_SHIELD_IDS_LEN],
+    shield_ids: [u32; MAX_BLACKLIST_LEN],
     // TODO: Do I need an owner?
     // owner: AztecAddress,
     // the note header (contract_address, nonce, storage_slot)
@@ -29,7 +29,7 @@ struct BlacklistNote {
 }
 
 impl BlacklistNote{
-    pub fn new(count: u32, shield_ids: [u32; MAX_SHIELD_IDS_LEN]) -> Self {
+    pub fn new(count: u32, shield_ids: [u32; MAX_BLACKLIST_LEN]) -> Self {
         Self {
             count,
             shield_ids,
@@ -40,7 +40,7 @@ impl BlacklistNote{
     pub fn empty() -> Self {
         Self {
             count: 0,
-            shield_ids: [0; MAX_SHIELD_IDS_LEN],
+            shield_ids: [0; MAX_BLACKLIST_LEN],
             header: NoteHeader::empty(),
         }
     }
@@ -48,7 +48,7 @@ impl BlacklistNote{
     pub fn serialize(self) -> [Field; BLACKLIST_NOTE_LEN] {
         let mut serialized_note = [0 as Field; BLACKLIST_NOTE_LEN];
         serialized_note[0] = self.count as Field;
-        for i in 0..MAX_SHIELD_IDS_LEN {
+        for i in 0..MAX_BLACKLIST_LEN {
             serialized_note[i + 1] = self.shield_ids[i] as Field;
         }
         serialized_note
@@ -58,7 +58,7 @@ impl BlacklistNote{
         Self {
             count: serialized_note[0] as u32,
             // TODO
-            shield_ids: [0; MAX_SHIELD_IDS_LEN],
+            shield_ids: [0; MAX_BLACKLIST_LEN],
             header: NoteHeader::empty(),
         }
     }
