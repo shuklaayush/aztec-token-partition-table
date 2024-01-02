@@ -10,14 +10,17 @@
 contract Attestor {
     use dep::aztec::{
         context::{PrivateContext, PublicContext, Context},
+        note::utils as note_utils,
         state_vars::{map::Map, public_state::PublicState},
         types::type_serialization::{
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
+            aztec_address_serialization::{AztecAddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
         },
-        types::address::{AztecAddress},
+        types::address::AztecAddress,
     };
 
     struct Storage {
+        admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
         // TODO: Change this to an indexed merkle tree
         blacklisted: Map<PublicState<bool, BOOL_SERIALIZED_LEN>>,
     }
@@ -25,9 +28,14 @@ contract Attestor {
     impl Storage {
         fn init(context: Context) -> pub Self {
             Storage {
+                admin: PublicState::new(
+                    context,
+                    1,
+                    AztecAddressSerializationMethods,
+                ),
                 blacklisted: Map::new(
                     context,
-                    0,
+                    2,
                     |context, slot| {
                         PublicState::new(
                             context,
@@ -41,19 +49,26 @@ contract Attestor {
     }
 
     #[aztec(public)]
-    pub fn add_to_blacklist(token_address: AztecAddress, deposit_id: u32) {
-        // TODO: Add admin
-        // assert(storage.admin.read().eq(AztecAddress::new(context.msg_sender())), "caller is not admin");
-        storage.blacklisted.at(deposit_id).write(true);
+    pub fn add_to_blacklist(token_address: AztecAddress, shield_id: u32) {
+        assert(storage.admin.read().eq(AztecAddress::new(context.msg_sender())), "caller is not admin");
+        storage.blacklisted.at(shield_id as Field).write(true);
     }
 
     #[aztec(public)]
-    pub fn remove_from_blacklist(token_address: AztecAddress, deposit_id: u32) {
-        storage.blacklisted.at(deposit_id).write(false);
+    pub fn remove_from_blacklist(token_address: AztecAddress, shield_id: u32) {
+        storage.blacklisted.at(shield_id as Field).write(false);
     }
 
-    #[aztec(private)]
-    fn request_attestation(table: PartitionTable, attestor: AztecAddress) -> bool {
-        // TODO: Do a non-intersection check between the partition table and the blacklist
+    // #[aztec(private)]
+    // fn request_attestation(table: PartitionTable, attestor: AztecAddress) -> bool {
+    //     // TODO: Do a non-intersection check between the partition table and the blacklist
+    // }
+
+    // TODO: Only public state, why do I need this?
+    unconstrained fn compute_note_hash_and_nullifier(
+        contract_address: Field,
+        nonce: Field,
+        storage_slot: Field,
+    ) {
     }
 }
