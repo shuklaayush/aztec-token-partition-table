@@ -1,3 +1,4 @@
+use dep::protocol_types::constants::MAX_READ_REQUESTS_PER_CALL;
 use dep::aztec::{
     note::{
         note_header::NoteHeader,
@@ -6,7 +7,6 @@ use dep::aztec::{
     },
     hash::pedersen_hash,
     context::PrivateContext,
-    constants_gen::MAX_READ_REQUESTS_PER_CALL,
     state_vars::set::Set,
     log::emit_encrypted_log,
 };
@@ -20,50 +20,34 @@ use dep::aztec::oracle::{
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
-use crate::types::partition_table::{PartitionTable, MAX_SHIELD_IDS_LEN};
-
-global TOKEN_NOTE_LEN: Field = 25; // 3 plus 22 (PT) and a header.
+global TOKEN_NOTE_LEN: Field = 3; // 3 plus a header.
 
 struct TokenNote {
     // the amount of tokens in the note
     amount: SafeU120,
-    // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note
-    // can be privately spent. When nullifier secret and encryption private key is same
+    // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note 
+    // can be privately spent. When nullifier secret and encryption private key is same 
     // we can simply use the owner for this one.
     owner: AztecAddress,
     // randomness of the note to hide contents.
     randomness: Field,
-    // TODO
-    // partition table storing merkle hash of the deposit ids contributing to a note
-    partition_table: PartitionTable,
     // the note header (contract_address, nonce, storage_slot)
     // included in the note such that it becomes part of encrypted logs for later use.
     header: NoteHeader,
 }
 
 impl TokenNote {
-    pub fn new(amount: SafeU120, owner: AztecAddress, shield_ids: [u32; MAX_SHIELD_IDS_LEN]) -> Self {
+    pub fn new(amount: SafeU120, owner: AztecAddress) -> Self {
         Self {
             amount,
             owner,
             randomness: rand(),
-            partition_table: PartitionTable::new(shield_ids),
             header: NoteHeader::empty(),
         }
     }
 
     pub fn serialize(self) -> [Field; TOKEN_NOTE_LEN] {
-        let mut serialized_note = [0; TOKEN_NOTE_LEN];
-        serialized_note[0] = self.amount.value as Field;
-        serialized_note[1] = self.owner.address;
-        serialized_note[2] = self.randomness;
-
-        let partition_table_serialized = self.partition_table.serialize();
-        for i in 0..partition_table_serialized.len() {
-            serialized_note[i + 3] = partition_table_serialized[i];
-        }
-        
-        serialized_note
+        [self.amount.value as Field, self.owner.address, self.randomness]
     }
 
     pub fn deserialize(serialized_note: [Field; TOKEN_NOTE_LEN]) -> Self {
@@ -71,16 +55,17 @@ impl TokenNote {
             amount: SafeU120::new(serialized_note[0]),
             owner: AztecAddress::new(serialized_note[1]),
             randomness: serialized_note[2],
-            // TODO
-            partition_table: PartitionTable::empty(),
             header: NoteHeader::empty(),
         }
     }
 
     pub fn compute_note_hash(self) -> Field {
-        let serialized_note = self.serialize();
         // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash(serialized_note, 0)
+        pedersen_hash([
+            self.amount.value as Field, 
+            self.owner.address as Field,
+            self.randomness,
+        ],0)
     }
 
     // docs:start:nullifier
@@ -113,7 +98,7 @@ impl TokenNote {
               self.serialize(),
           );
       }
-    }
+  }
 }
 
 fn deserialize(serialized_note: [Field; TOKEN_NOTE_LEN]) -> TokenNote {
