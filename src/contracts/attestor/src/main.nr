@@ -89,6 +89,7 @@ contract Attestor {
     #[aztec(public)]
     pub fn add_to_blacklist(token: AztecAddress, shield_id: Field) {
         assert(storage.admin.read().eq(AztecAddress::new(context.msg_sender())), "caller is not admin");
+        // assert(shield_id > 0, "shield id must be non-zero");
 
         let mut blacklist = storage.blacklists.at(token.address).read();
         let blacklist = blacklist.add(shield_id);

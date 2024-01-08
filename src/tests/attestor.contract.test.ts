@@ -117,13 +117,25 @@ describe("e2e_attestor_contract", () => {
         const receipt = await tx.wait();
         expect(receipt.status).toBe(TxStatus.MINED);
 
-        attestorSim.addToBlacklist(accounts[0].address, shieldId);
         expect(
           await asset.methods.is_blacklisted(accounts[0].address, shieldId).view()
         ).toEqual(true);
-        expect(
-          await asset.methods.is_blacklisted(accounts[0].address, shieldId).view()
-        ).toEqual(attestorSim.isBlacklisted(accounts[0].address, shieldId));
+      });
+
+      it("multiple", async () => {
+        const shieldIds = [1n, 69n, 420n];
+
+        for (const shieldId of shieldIds) {
+          const tx = asset.methods
+            .add_to_blacklist(accounts[0].address, shieldId)
+            .send();
+          const receipt = await tx.wait();
+          expect(receipt.status).toBe(TxStatus.MINED);
+
+          expect(
+            await asset.methods.is_blacklisted(accounts[0].address, shieldId).view()
+          ).toEqual(true);
+        }
       });
 
       describe("failure cases", () => {
