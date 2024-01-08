@@ -312,6 +312,7 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
+        // TODO: Broadcast attestations by returning notes here
         storage.balances.at(from).sub(SafeU120::new(amount));
 
         let selector = compute_selector("_increase_public_balance((Field),Field)");

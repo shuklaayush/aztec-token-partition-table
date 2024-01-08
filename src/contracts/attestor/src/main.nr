@@ -11,24 +11,34 @@ mod types;
 mod utils;
 
 contract Attestor {
+    ////////////////////////////////////////////////////////////////////////////////
+    // IMPORTS
+    ////////////////////////////////////////////////////////////////////////////////
+
     use dep::aztec::{
         context::{PrivateContext, PublicContext, Context},
         note::{
             note_header::NoteHeader,
             utils as note_utils
         },
+        selector::compute_selector,
         state_vars::{map::Map, singleton::Singleton ,public_state::PublicState},
         types::type_serialization::{
             aztec_address_serialization::{AztecAddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
         },
         types::address::AztecAddress,
     };
-    
+
     use crate::types::blacklist_note::{BlacklistNote, BlacklistNoteMethods, BLACKLIST_NOTE_LEN};
     use crate::utils::{MAX_SHIELD_IDS_LEN, contains};
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // STORAGE
+    ////////////////////////////////////////////////////////////////////////////////
+
     struct Storage {
         admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
+        // TODO: blacklist_of?
         blacklisted: Map<Singleton<BlacklistNote, BLACKLIST_NOTE_LEN>>,
     }
 
@@ -52,21 +62,29 @@ contract Attestor {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // CONSTRUCTOR
+    ////////////////////////////////////////////////////////////////////////////////
+
     // TODO: Make private?
     #[aztec(public)]
     fn constructor(admin: AztecAddress) {
         storage.admin.write(admin);
     }
-    
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC
+    ////////////////////////////////////////////////////////////////////////////////
+
     #[aztec(public)]
     pub fn add_to_blacklist(token_address: AztecAddress, shield_id: u32) {
         assert(storage.admin.read().eq(AztecAddress::new(context.msg_sender())), "caller is not admin");
 
-        let mut note = storage.blacklisted.at(token_address.address).get_note(false);
-        note.shield_ids[note.count] = shield_id;
-        note.count += 1;
+        let mut blacklist_note = storage.blacklisted.at(token_address.address).get_note(false);
+        blacklist_note.shield_ids[blacklist_note.count] = shield_id;
+        blacklist_note.count += 1;
 
-        storage.blacklisted.at(token_address.address).replace(&mut note, true);
+        storage.blacklisted.at(token_address.address).replace(&mut blacklist_note, true);
     }
 
     // TODO
@@ -75,18 +93,51 @@ contract Attestor {
     //     storage.blacklisted.at(shield_id as Field).write(false);
     // }
 
-    #[aztec(private)]
-    fn request_attestation(partition_table: [u32; MAX_SHIELD_IDS_LEN]) -> bool {
-        let token_address = AztecAddress::new(context.msg_sender());
-        // TODO: Use merkle tree intersection/non-intersection check
-        let mut res = true;
-        for i in 0..partition_table.len() {
-            let note = storage.blacklisted.at(token_address.address).get_note(false);
-            if contains(note.shield_ids, partition_table[i]) {
-                res = false;
-            }
+    #[aztec(public)]
+    pub fn is_blacklisted(token_address: AztecAddress, shield_id: u32) {
+        let selector = compute_selector("_is_blacklisted((Field),u32)");
+        let return_values = context.call_public_function(context.this_address(), selector, [token_address.address, shield_id as Field]);
+        return_values[0] as bool
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // #[aztec(private)]
+    // fn request_attestation(partition_table: [u32; MAX_SHIELD_IDS_LEN]) -> bool {
+    //     let token_address = AztecAddress::new(context.msg_sender());
+    //     let selector = compute_selector("_is_blacklisted((Field),u32)");
+    //     // TODO: Use merkle tree intersection/non-intersection check
+    //     let mut res = true;
+    //     for i in 0..partition_table.len() {
+    //         if context.call_public_function(context.this_address(), selector, [token_address, partition_table[i] as Field]) {
+    //             res = false;
+    //         }
+    //     }
+    //     res
+    // }
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    // INTERNAL
+    ////////////////////////////////////////////////////////////////////////////////
+
+    #[aztec(public)]
+    internal fn _is_blacklisted(token_address: AztecAddress, shield_id: u32) -> bool {
+        let mut res = false;
+        let blacklist_note = storage.blacklisted.at(token_address.address).get_note(false);
+        if contains(blacklist_note.shield_ids, shield_id) {
+            res = true;
         }
         res
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // UNCONSTRAINED
+    ////////////////////////////////////////////////////////////////////////////////
+
+    unconstrained fn admin() -> Field {
+        storage.admin.read().address
     }
 
     // TODO 
