@@ -27,6 +27,7 @@ contract Token {
         types::type_serialization::{
             field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
+            u32_serialization::{U32SerializationMethods, U32_SERIALIZED_LEN},
             aztec_address_serialization::{AztecAddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
         },
         types::address::{AztecAddress},
@@ -66,6 +67,8 @@ contract Token {
         pending_shields: Set<TransparentNote, TRANSPARENT_NOTE_LEN>,
         // docs:end:storage_pending_shields
         public_balances: Map<PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>>,
+        // total number of shielded notes
+        shields_counter: PublicState<u32, U32_SERIALIZED_LEN>,
     }
     // docs:end:storage_struct
 
@@ -112,6 +115,11 @@ contract Token {
                             SafeU120SerializationMethods,
                         )
                     },
+                ),
+                shields_counter: PublicState::new(
+                    context,
+                    7,
+                    U32SerializationMethods,
                 ),
             }
         }
@@ -283,6 +291,9 @@ contract Token {
 
         storage.balances.at(to).add(SafeU120::new(amount));
 
+        let selector = compute_selector("_increment_shields_counter()");
+        let _void = context.call_public_function(context.this_address(), selector, []);
+        
         1
     }
     // docs:end:redeem_shield
@@ -388,6 +399,12 @@ contract Token {
     }
     // docs:end:reduce_total_supply
 
+    #[aztec(public)]
+    internal fn _increment_shields_counter() {
+        let counter = storage.shields_counter.read() + 1;
+        storage.shields_counter.write(counter);
+    }
+    
     /// Unconstrained ///
 
     // docs:start:admin
@@ -425,6 +442,10 @@ contract Token {
         storage.public_balances.at(owner.address).read().value
     }
     // docs:end:balance_of_public
+
+    unconstrained fn shields_counter() -> u32 {
+        storage.shields_counter.read()
+    }
 
     // Below this point is the stuff of nightmares.
     // This should ideally not be required. What do we do if vastly different types of serialized_notes?
