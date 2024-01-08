@@ -126,17 +126,17 @@ describe("e2e_attestor_contract", () => {
         ).toEqual(attestorSim.isBlacklisted(accounts[0].address, shieldId));
       });
 
-      // describe("failure cases", () => {
-      //   it("as non-admin", async () => {
-      //     const amount = 10000n;
-      //     await expect(
-      //       asset
-      //         .withWallet(wallets[1])
-      //         .methods.mint_public(accounts[0].address, amount)
-      //         .simulate()
-      //     ).rejects.toThrowError("Assertion failed: caller is not minter");
-      //   });
-      // });
+      describe("failure cases", () => {
+        it("as non-admin", async () => {
+        const shieldId = 69n;
+          await expect(
+            asset
+              .withWallet(wallets[1])
+              .methods.add_to_blacklist(accounts[0].address, shieldId)
+              .simulate()
+          ).rejects.toThrowError("caller is not admin");
+        });
+      });
     });
   });
 });
