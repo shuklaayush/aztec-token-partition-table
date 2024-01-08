@@ -7,13 +7,13 @@
   "scripts": {
     "build": "yarn clean && tsc -b && webpack",
     "install:noir": "curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash noirup -v v0.18.0-aztec.5",
-    "install:sandbox": "docker pull aztecprotocol/aztec-sandbox:0.16.1",
+    "install:sandbox": "docker pull aztecprotocol/aztec-sandbox:0.16.9",
     "clean": "rm -rf ./dest .tsbuildinfo",
-    "start:sandbox": "SANDBOX_VERSION=0.16.1 /bin/bash -c \"$(curl -fsSL 'https://sandbox.aztec.network')\" ",
+    "start:sandbox": "SANDBOX_VERSION=0.16.9 /bin/bash -c \"$(curl -fsSL 'https://sandbox.aztec.network')\" ",
     "formatting": "prettier --check ./src && eslint ./src",
     "formatting:fix": "prettier -w ./src",
-    "compile": "aztec-cli compile src/contracts --outdir ../artifacts --typescript ../artifacts",
-    "compile:local": "ts-node --esm ../../cli/src/bin/index.ts compile \"src/contracts\" --outdir \"../artifacts\" --typescript \"../artifacts\"",
+    "compile": "aztec-cli compile src/contracts/token --outdir ../../artifacts --typescript ../../artifacts",
+    "compile:local": "ts-node --esm ../aztec-packages/yarn-project/cli/src/bin/index.ts compile \"src/contracts/token\" --outdir \"../../artifacts\" --typescript \"../../artifacts\"",
     "test:integration": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --runInBand"
   },
   "jest": {
