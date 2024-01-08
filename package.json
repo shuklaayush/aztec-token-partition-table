@@ -12,7 +12,9 @@
     "start:sandbox": "SANDBOX_VERSION=0.16.9 /bin/bash -c \"$(curl -fsSL 'https://sandbox.aztec.network')\" ",
     "formatting": "prettier --check ./src && eslint ./src",
     "formatting:fix": "prettier -w ./src",
-    "compile": "aztec-cli compile src/contracts/token --outdir ../../artifacts --typescript ../../artifacts",
+    "compile": "yarn compile:token && yarn compile:attestor",
+    "compile:attestor": "aztec-cli compile src/contracts/attestor --outdir ../../artifacts --typescript ../../artifacts",
+    "compile:token": "aztec-cli compile src/contracts/token --outdir ../../artifacts --typescript ../../artifacts",
     "compile:local": "ts-node --esm ../aztec-packages/yarn-project/cli/src/bin/index.ts compile \"src/contracts/token\" --outdir \"../../artifacts\" --typescript \"../../artifacts\"",
     "test:integration": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --runInBand"
   },
