@@ -97,7 +97,7 @@ export class AttestorContract extends ContractBase {
     /** remove_from_blacklist(token: struct, shield_id: field) */
     remove_from_blacklist: ((token: AztecAddressLike, shield_id: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** request_attestation(partition_table: array) */
-    request_attestation: ((partition_table: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** request_attestation(token: struct, partition_table: array) */
+    request_attestation: ((token: AztecAddressLike, partition_table: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
   };
 }

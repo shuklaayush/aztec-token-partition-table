@@ -106,8 +106,7 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     #[aztec(private)]
-    fn request_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) -> bool {
-        let token = AztecAddress::new(context.msg_sender());
+    fn request_attestation(token: AztecAddress, partition_table: [Field; MAX_SHIELD_IDS_LEN]) -> bool {
         let mut res = true;
         for i in 0..partition_table.len() {
             if storage.blacklists.at(token.address).read().contains(partition_table[i]) {

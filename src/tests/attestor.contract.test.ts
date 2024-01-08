@@ -108,9 +108,23 @@ describe("e2e_attestor_contract", () => {
   // });
 
   describe("Blacklisting", () => {
-    describe("Public", () => {
-      it("as admin", async () => {
-        const shieldId = 69n;
+    it("single", async () => {
+      const shieldId = 69n;
+      const tx = asset.methods
+        .add_to_blacklist(accounts[0].address, shieldId)
+        .send();
+      const receipt = await tx.wait();
+      expect(receipt.status).toBe(TxStatus.MINED);
+
+      expect(
+        await asset.methods.is_blacklisted(accounts[0].address, shieldId).view()
+      ).toEqual(true);
+    });
+
+    it("multiple", async () => {
+      const shieldIds = [1n, 69n, 420n];
+
+      for (const shieldId of shieldIds) {
         const tx = asset.methods
           .add_to_blacklist(accounts[0].address, shieldId)
           .send();
@@ -120,36 +134,44 @@ describe("e2e_attestor_contract", () => {
         expect(
           await asset.methods.is_blacklisted(accounts[0].address, shieldId).view()
         ).toEqual(true);
-      });
+      }
+    });
 
-      it("multiple", async () => {
-        const shieldIds = [1n, 69n, 420n];
-
-        for (const shieldId of shieldIds) {
-          const tx = asset.methods
-            .add_to_blacklist(accounts[0].address, shieldId)
-            .send();
-          const receipt = await tx.wait();
-          expect(receipt.status).toBe(TxStatus.MINED);
-
-          expect(
-            await asset.methods.is_blacklisted(accounts[0].address, shieldId).view()
-          ).toEqual(true);
-        }
-      });
-
-      describe("failure cases", () => {
-        it("as non-admin", async () => {
-        const shieldId = 69n;
-          await expect(
-            asset
-              .withWallet(wallets[1])
-              .methods.add_to_blacklist(accounts[0].address, shieldId)
-              .simulate()
-          ).rejects.toThrowError("caller is not admin");
-        });
+    describe("failure cases", () => {
+      it("as non-admin", async () => {
+      const shieldId = 69n;
+        await expect(
+          asset
+            .withWallet(wallets[1])
+            .methods.add_to_blacklist(accounts[0].address, shieldId)
+            .simulate()
+        ).rejects.toThrowError("caller is not admin");
       });
     });
   });
+  
+  // describe("Requesting attestation", () => {
+  //   const shieldIds = [1n, 69n, 420n];
+
+  //   beforeAll(async () => {
+  //     for (const shieldId of shieldIds) {
+  //       const tx = asset.methods
+  //         .add_to_blacklist(accounts[0].address, shieldId)
+  //         .send();
+  //       const receipt = await tx.wait();
+  //       expect(receipt.status).toBe(TxStatus.MINED);
+  //     }
+  //   });
+
+  //   it("single", async () => {
+  //     const partitionTable = [2n, 69n];
+  //     const tx = asset.methods
+  //       // BUG: Doesn't work
+  //       .request_attestation(accounts[0].address, partitionTable)
+  //       .send();
+  //     const receipt = await tx.wait();
+  //     expect(receipt.status).toBe(TxStatus.MINED);
+  //   });
+  // });
 });
 
