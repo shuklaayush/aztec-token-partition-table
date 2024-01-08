@@ -10,8 +10,6 @@
 mod types;
 mod utils;
 
-global MAX_SHIELD_IDS_LEN: Field = 10;
-
 contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
     // IMPORTS
@@ -33,6 +31,12 @@ contract Attestor {
     };
     
     use crate::types::{blacklist::Blacklist, type_serialization::blacklist_serialization::{BLACKLIST_SERIALIZED_LEN, BlacklistSerializationMethods}};
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // CONSTANTS
+    ////////////////////////////////////////////////////////////////////////////////
+
+    global MAX_SHIELD_IDS_LEN: Field = 10;
 
     ////////////////////////////////////////////////////////////////////////////////
     // STORAGE
@@ -91,29 +95,26 @@ contract Attestor {
         storage.blacklists.at(token.address).write(blacklist);
     }
 
-    // TODO
-    // #[aztec(public)]
-    // pub fn remove_from_blacklist(token_address: AztecAddress, shield_id: Field) {
-    //     storage.blacklisted.at(shield_id).write(false);
-    // }
+    #[aztec(public)]
+    pub fn remove_from_blacklist(token: AztecAddress, shield_id: Field) { 
+        // TODO
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // PRIVATE
     ////////////////////////////////////////////////////////////////////////////////
 
-    // #[aztec(private)]
-    // fn request_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) -> bool {
-    //     let token_address = AztecAddress::new(context.msg_sender());
-    //     let selector = compute_selector("_is_blacklisted((Field),Field)");
-    //     // TODO: Use merkle tree intersection/non-intersection check
-    //     let mut res = true;
-    //     for i in 0..partition_table.len() {
-    //         if context.call_public_function(context.this_address(), selector, [token_address, partition_table[i]) {
-    //             res = false;
-    //         }
-    //     }
-    //     res
-    // }
+    #[aztec(private)]
+    fn request_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) -> bool {
+        let token = AztecAddress::new(context.msg_sender());
+        let mut res = true;
+        for i in 0..partition_table.len() {
+            if storage.blacklists.at(token.address).read().contains(partition_table[i]) {
+                res = false;
+            }
+        }
+        res
+    }
     
     ////////////////////////////////////////////////////////////////////////////////
     // INTERNAL
@@ -135,7 +136,7 @@ contract Attestor {
     }
 
     unconstrained fn is_blacklisted(token: AztecAddress, shield_id: Field) -> bool {
-        storage.blacklists.at(token.address).read().is_blacklisted(shield_id)
+        storage.blacklists.at(token.address).read().contains(shield_id)
     }
 
     unconstrained fn compute_note_hash_and_nullifier(

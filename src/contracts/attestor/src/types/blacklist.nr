@@ -20,10 +20,6 @@ impl Blacklist {
         }
     }
 
-    unconstrained pub fn is_blacklisted(self: Self, shield_id: Field) -> bool {
-        contains(self.shield_ids, shield_id, self.count)
-    }
-
     pub fn add(mut self: Self, shield_id: Field) -> Blacklist {
         // assert(self.count < MAX_BLACKLIST_LEN);
         self.shield_ids[self.count] = shield_id;
@@ -34,6 +30,10 @@ impl Blacklist {
     }
 
     // pub fn remove(self: Self, shield_id: Field) { }
+
+    pub fn contains(self: Self, shield_id: Field) -> bool {
+        contains(self.shield_ids, shield_id)
+    }
 }
 
 // docs:end:field_serialization
@@ -41,10 +41,9 @@ impl Blacklist {
 pub fn contains<N>(
     arr: [Field; N],
     addr: Field,
-    max_index: Field
 ) -> bool {
     let mut res = false;
-    for i in 0..max_index {
+    for i in 0..N {
         if arr[i] == addr {
             res = true;
         }
