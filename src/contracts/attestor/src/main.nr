@@ -10,27 +10,29 @@
 mod types;
 mod utils;
 
+global MAX_SHIELD_IDS_LEN: Field = 10;
+
 contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
     // IMPORTS
     ////////////////////////////////////////////////////////////////////////////////
 
     use dep::aztec::{
-        context::{PrivateContext, PublicContext, Context},
+        context::Context,
         note::{
             note_header::NoteHeader,
             utils as note_utils
         },
         selector::compute_selector,
-        state_vars::{map::Map, singleton::Singleton ,public_state::PublicState},
+        state_vars::{map::Map, public_state::PublicState},
         types::type_serialization::{
             aztec_address_serialization::{AztecAddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
+            field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
         },
         types::address::AztecAddress,
     };
-
-    use crate::types::blacklist_note::{BlacklistNote, BlacklistNoteMethods, BLACKLIST_NOTE_LEN};
-    use crate::utils::{MAX_SHIELD_IDS_LEN, contains};
+    
+    use crate::types::{blacklist::Blacklist, type_serialization::blacklist_serialization::{BLACKLIST_SERIALIZED_LEN, BlacklistSerializationMethods}};
 
     ////////////////////////////////////////////////////////////////////////////////
     // STORAGE
@@ -38,8 +40,7 @@ contract Attestor {
 
     struct Storage {
         admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
-        // TODO: blacklist_of?
-        blacklisted: Map<Singleton<BlacklistNote, BLACKLIST_NOTE_LEN>>,
+        blacklists: Map<PublicState<Blacklist, BLACKLIST_SERIALIZED_LEN>>,
     }
 
     impl Storage {
@@ -51,11 +52,15 @@ contract Attestor {
                     AztecAddressSerializationMethods,
                 ),
                 // Token address -> BlacklistNote
-                blacklisted: Map::new(
+                blacklists: Map::new(
                     context,
                     2,
                     |context, slot| {
-                        Singleton::new(context, slot, BlacklistNoteMethods)
+                        PublicState::new(
+                            context,
+                            slot,
+                            BlacklistSerializationMethods,
+                        )
                     },
                 ),
             }
@@ -78,41 +83,32 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     #[aztec(public)]
-    pub fn add_to_blacklist(token_address: AztecAddress, shield_id: u32) {
+    pub fn add_to_blacklist(token: AztecAddress, shield_id: Field) {
         assert(storage.admin.read().eq(AztecAddress::new(context.msg_sender())), "caller is not admin");
 
-        let mut blacklist_note = storage.blacklisted.at(token_address.address).get_note(false);
-        blacklist_note.shield_ids[blacklist_note.count] = shield_id;
-        blacklist_note.count += 1;
-
-        storage.blacklisted.at(token_address.address).replace(&mut blacklist_note, true);
+        let mut blacklist = storage.blacklists.at(token.address).read();
+        let blacklist = blacklist.add(shield_id);
+        storage.blacklists.at(token.address).write(blacklist);
     }
 
     // TODO
     // #[aztec(public)]
-    // pub fn remove_from_blacklist(token_address: AztecAddress, shield_id: u32) {
-    //     storage.blacklisted.at(shield_id as Field).write(false);
+    // pub fn remove_from_blacklist(token_address: AztecAddress, shield_id: Field) {
+    //     storage.blacklisted.at(shield_id).write(false);
     // }
-
-    #[aztec(public)]
-    pub fn is_blacklisted(token_address: AztecAddress, shield_id: u32) {
-        let selector = compute_selector("_is_blacklisted((Field),u32)");
-        let return_values = context.call_public_function(context.this_address(), selector, [token_address.address, shield_id as Field]);
-        return_values[0] as bool
-    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // PRIVATE
     ////////////////////////////////////////////////////////////////////////////////
 
     // #[aztec(private)]
-    // fn request_attestation(partition_table: [u32; MAX_SHIELD_IDS_LEN]) -> bool {
+    // fn request_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) -> bool {
     //     let token_address = AztecAddress::new(context.msg_sender());
-    //     let selector = compute_selector("_is_blacklisted((Field),u32)");
+    //     let selector = compute_selector("_is_blacklisted((Field),Field)");
     //     // TODO: Use merkle tree intersection/non-intersection check
     //     let mut res = true;
     //     for i in 0..partition_table.len() {
-    //         if context.call_public_function(context.this_address(), selector, [token_address, partition_table[i] as Field]) {
+    //         if context.call_public_function(context.this_address(), selector, [token_address, partition_table[i]) {
     //             res = false;
     //         }
     //     }
@@ -130,16 +126,6 @@ contract Attestor {
         storage.admin.write(new_admin);
     }
 
-    #[aztec(public)]
-    internal fn _is_blacklisted(token_address: AztecAddress, shield_id: u32) -> bool {
-        let mut res = false;
-        let blacklist_note = storage.blacklisted.at(token_address.address).get_note(false);
-        if contains(blacklist_note.shield_ids, shield_id) {
-            res = true;
-        }
-        res
-    }
-
     ////////////////////////////////////////////////////////////////////////////////
     // UNCONSTRAINED
     ////////////////////////////////////////////////////////////////////////////////
@@ -148,14 +134,16 @@ contract Attestor {
         storage.admin.read().address
     }
 
-    // TODO 
+    unconstrained fn is_blacklisted(token: AztecAddress, shield_id: Field) -> bool {
+        storage.blacklists.at(token.address).read().is_blacklisted(shield_id)
+    }
+
     unconstrained fn compute_note_hash_and_nullifier(
         contract_address: Field,
         nonce: Field,
         storage_slot: Field,
-        serialized_note: [Field; BLACKLIST_NOTE_LEN]
+        serialized_note: [Field; 0]
     ) -> [Field; 4] {
-        let note_header = NoteHeader::new(contract_address, nonce, storage_slot);
-        note_utils::compute_note_hash_and_nullifier(BlacklistNoteMethods, note_header, serialized_note)
+        [0; 4]
     }
 }

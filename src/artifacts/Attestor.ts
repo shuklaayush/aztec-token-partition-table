@@ -82,11 +82,8 @@ export class AttestorContract extends ContractBase {
     /** _initialize(new_admin: struct) */
     _initialize: ((new_admin: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** _is_blacklisted(token_address: struct, shield_id: integer) */
-    _is_blacklisted: ((token_address: AztecAddressLike, shield_id: (bigint | number)) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
-
-    /** add_to_blacklist(token_address: struct, shield_id: integer) */
-    add_to_blacklist: ((token_address: AztecAddressLike, shield_id: (bigint | number)) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** add_to_blacklist(token: struct, shield_id: field) */
+    add_to_blacklist: ((token: AztecAddressLike, shield_id: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** admin() */
     admin: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
@@ -94,7 +91,7 @@ export class AttestorContract extends ContractBase {
     /** compute_note_hash_and_nullifier(contract_address: field, nonce: field, storage_slot: field, serialized_note: array) */
     compute_note_hash_and_nullifier: ((contract_address: FieldLike, nonce: FieldLike, storage_slot: FieldLike, serialized_note: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** is_blacklisted(token_address: struct, shield_id: integer) */
-    is_blacklisted: ((token_address: AztecAddressLike, shield_id: (bigint | number)) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** is_blacklisted(token: struct, shield_id: field) */
+    is_blacklisted: ((token: AztecAddressLike, shield_id: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
   };
 }
