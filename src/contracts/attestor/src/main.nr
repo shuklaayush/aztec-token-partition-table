@@ -67,9 +67,10 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     // TODO: Make private?
-    #[aztec(public)]
+    #[aztec(private)]
     fn constructor(admin: AztecAddress) {
-        storage.admin.write(admin);
+        let selector = compute_selector("_initialize((Field))");
+        context.call_public_function(context.this_address(), selector, [admin.address]);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +122,13 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
     // INTERNAL
     ////////////////////////////////////////////////////////////////////////////////
+
+    #[aztec(public)]
+    internal fn _initialize(
+        new_admin: AztecAddress,
+    ) {
+        storage.admin.write(new_admin);
+    }
 
     #[aztec(public)]
     internal fn _is_blacklisted(token_address: AztecAddress, shield_id: u32) -> bool {

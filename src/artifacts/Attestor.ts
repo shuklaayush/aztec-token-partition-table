@@ -79,6 +79,9 @@ export class AttestorContract extends ContractBase {
   /** Type-safe wrappers for the public methods exposed by the contract. */
   public methods!: {
     
+    /** _initialize(new_admin: struct) */
+    _initialize: ((new_admin: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+
     /** _is_blacklisted(token_address: struct, shield_id: integer) */
     _is_blacklisted: ((token_address: AztecAddressLike, shield_id: (bigint | number)) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
