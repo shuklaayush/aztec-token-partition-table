@@ -23,6 +23,7 @@ use dep::aztec::oracle::{
 };
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
+use crate::types::partition_table::MAX_SHIELD_IDS_LEN;
 
 // A set implementing standard manipulation of balances.
 // Does not require spending key, but only knowledge.
@@ -73,7 +74,7 @@ impl BalanceSet {
   }
 
     pub fn add(self: Self, addend: SafeU120) {
-        let mut addend_note = TokenNote::new(addend, self.owner);
+        let mut addend_note = TokenNote::new(addend, self.owner, [0; MAX_SHIELD_IDS_LEN]);
 
         // docs:start:insert
         self.set.insert(&mut addend_note, true);

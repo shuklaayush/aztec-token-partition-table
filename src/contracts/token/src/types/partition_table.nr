@@ -9,21 +9,21 @@ global MAX_ATTESTATIONS_LEN: Field = 10;
 global PARTITION_TABLE_LEN: Field = 22;
 
 // struct Shield {
-//     shield_id: u32,
+//     shield_id: Field,
 //     value: SafeU120,
 // }
 
 // TODO: No hardcode, change to vec if possible
 struct PartitionTable {
     // TODO: Change to struct. Can I use vec?
-    shield_ids: [u32; MAX_SHIELD_IDS_LEN], // Stores the origin shield deposit IDs
+    shield_ids: [Field; MAX_SHIELD_IDS_LEN], // Stores the origin shield deposit IDs
     attestations: [AztecAddress; MAX_ATTESTATIONS_LEN], // Stores the attestations collected
     max_block_number: Field, // The older the block number, the less risky the shield is
     is_table_cleared: bool,
 }
 
 impl PartitionTable {
-    pub fn new(shield_ids: [u32; MAX_SHIELD_IDS_LEN]) -> Self {
+    pub fn new(shield_ids: [Field; MAX_SHIELD_IDS_LEN]) -> Self {
         Self {
             shield_ids: shield_ids,
             attestations: [AztecAddress::new(0); MAX_ATTESTATIONS_LEN],

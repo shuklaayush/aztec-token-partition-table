@@ -41,12 +41,12 @@ struct TokenNote {
 }
 
 impl TokenNote {
-    pub fn new(amount: SafeU120, owner: AztecAddress) -> Self {
+    pub fn new(amount: SafeU120, owner: AztecAddress, shield_ids: [Field; MAX_SHIELD_IDS_LEN]) -> Self {
         Self {
             amount,
             owner,
             randomness: rand(),
-            partition_table: PartitionTable::empty(),
+            partition_table: PartitionTable::new(shield_ids),
             header: NoteHeader::empty(),
         }
     }
@@ -70,7 +70,7 @@ impl TokenNote {
             amount: SafeU120::new(serialized_note[0]),
             owner: AztecAddress::new(serialized_note[1]),
             randomness: serialized_note[2],
-            // TODO:
+            // TODO
             partition_table: PartitionTable::empty(),
             header: NoteHeader::empty(),
         }
