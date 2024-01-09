@@ -20,7 +20,9 @@ use dep::aztec::oracle::{
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
-global TOKEN_NOTE_LEN: Field = 3; // 3 plus a header.
+use crate::types::partition_table::{PartitionTable, MAX_SHIELD_IDS_LEN};
+
+global TOKEN_NOTE_LEN: Field = 25; // 3 + 22 (PT) plus a header.
 
 struct TokenNote {
     // the amount of tokens in the note
@@ -31,6 +33,8 @@ struct TokenNote {
     owner: AztecAddress,
     // randomness of the note to hide contents.
     randomness: Field,
+    // partition table storing merkle hash of the deposit ids contributing to a note
+    partition_table: PartitionTable,
     // the note header (contract_address, nonce, storage_slot)
     // included in the note such that it becomes part of encrypted logs for later use.
     header: NoteHeader,
@@ -42,12 +46,23 @@ impl TokenNote {
             amount,
             owner,
             randomness: rand(),
+            partition_table: PartitionTable::empty(),
             header: NoteHeader::empty(),
         }
     }
 
     pub fn serialize(self) -> [Field; TOKEN_NOTE_LEN] {
-        [self.amount.value as Field, self.owner.address, self.randomness]
+        let mut serialized_note = [0; TOKEN_NOTE_LEN];
+        serialized_note[0] = self.amount.value as Field;
+        serialized_note[1] = self.owner.address;
+        serialized_note[2] = self.randomness;
+
+        let partition_table_serialized = self.partition_table.serialize();
+        for i in 0..partition_table_serialized.len() {
+            serialized_note[i + 3] = partition_table_serialized[i];
+        }
+
+        serialized_note
     }
 
     pub fn deserialize(serialized_note: [Field; TOKEN_NOTE_LEN]) -> Self {
@@ -55,17 +70,16 @@ impl TokenNote {
             amount: SafeU120::new(serialized_note[0]),
             owner: AztecAddress::new(serialized_note[1]),
             randomness: serialized_note[2],
+            // TODO:
+            partition_table: PartitionTable::empty(),
             header: NoteHeader::empty(),
         }
     }
 
     pub fn compute_note_hash(self) -> Field {
         // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash([
-            self.amount.value as Field, 
-            self.owner.address as Field,
-            self.randomness,
-        ],0)
+        let serialized_note = self.serialize();
+        pedersen_hash(serialized_note, 0)
     }
 
     // docs:start:nullifier

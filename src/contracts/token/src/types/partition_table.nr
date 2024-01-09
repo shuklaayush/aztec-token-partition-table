@@ -61,7 +61,7 @@ impl PartitionTable {
         }
         offset += MAX_SHIELD_IDS_LEN;
         for i in 0..MAX_ATTESTATIONS_LEN {
-            res[i + offset] = self.attestations[i + offset].address;
+            res[i + offset] = self.attestations[i].address;
         }
         offset += MAX_ATTESTATIONS_LEN;
         res[offset] = self.max_block_number;
