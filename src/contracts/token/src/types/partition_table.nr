@@ -1,7 +1,7 @@
 use dep::aztec::types::address::AztecAddress;
 use dep::safe_math::SafeU120;
 
-use crate::types::vec::{Vec, N, N_PLUS_ONE};
+use crate::types::vec::{Vec, N};
 
 global PARTITION_TABLE_LEN: Field = 24;
 
@@ -44,16 +44,16 @@ impl PartitionTable {
         let mut offset = 0;
 
         let shield_ids_serialized = self.shield_ids.serialize();
-        for i in 0..N_PLUS_ONE {
+        for i in 0..N+1 {
             res[i + offset] = shield_ids_serialized[i];
         }
-        offset += N_PLUS_ONE;
+        offset += N+1;
 
         let attestations_serialized = self.attestations.serialize();
-        for i in 0..N_PLUS_ONE {
+        for i in 0..N+1 {
             res[i + offset] = attestations_serialized[i];
         }
-        offset += N_PLUS_ONE;
+        offset += N+1;
 
         res[offset] = self.max_block_number;
         offset += 1;
@@ -67,19 +67,19 @@ impl PartitionTable {
         let mut res = PartitionTable::empty();
         let mut offset = 0;
 
-        let mut shield_ids_serialized = [0; N_PLUS_ONE];
-        for i in 0..N_PLUS_ONE {
+        let mut shield_ids_serialized = [0; N+1];
+        for i in 0..N+1 {
             shield_ids_serialized[i] = serialized[i + offset];
         }
         res.shield_ids = Vec::deserialize(shield_ids_serialized);
-        offset += N_PLUS_ONE;
+        offset += N+1;
 
-        let mut attestations_serialized = [0; N_PLUS_ONE];
-        for i in 0..N_PLUS_ONE {
+        let mut attestations_serialized = [0; N+1];
+        for i in 0..N+1 {
             attestations_serialized[i] = serialized[i + offset];
         }
         res.attestations = Vec::deserialize(attestations_serialized);
-        offset += N_PLUS_ONE;
+        offset += N+1;
 
         res.max_block_number = serialized[offset];
         offset += 1;
