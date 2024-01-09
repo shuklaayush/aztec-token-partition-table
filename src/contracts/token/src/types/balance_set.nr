@@ -23,7 +23,7 @@ use dep::aztec::oracle::{
 };
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
-use crate::types::partition_table::MAX_SHIELD_IDS_LEN;
+use crate::types::partition_table::PartitionTable;
 
 // A set implementing standard manipulation of balances.
 // Does not require spending key, but only knowledge.
@@ -80,7 +80,7 @@ impl BalanceSet {
         for i in 0..maybe_notes.len() {
             if maybe_notes[i].is_some() {
                 let attestations = maybe_notes[i].unwrap_unchecked().partition_table.attestations;
-                res = contains(attestations, attestor);
+                res = attestations.contains(attestor.address);
             }
         }
         res
@@ -99,8 +99,21 @@ impl BalanceSet {
         selected
     }
 
+    pub fn add_attestation(self: Self, note: TokenNote, attestor: AztecAddress) {
+        // TODO: clone
+        let shield_ids = note.partition_table.shield_ids;
+        let mut attestations = note.partition_table.attestations;
+        let attestations = attestations.push(attestor.address);
+        let partition_table = PartitionTable::new(shield_ids, attestations);
+
+        let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
+
+        // self.set.remove(note);
+        // self.set.insert(&mut new_note, true);
+    }
+
     pub fn add(self: Self, addend: SafeU120) {
-        let mut addend_note = TokenNote::new(addend, self.owner, [0; MAX_SHIELD_IDS_LEN]);
+        let mut addend_note = TokenNote::new(addend, self.owner, PartitionTable::empty());
 
         // docs:start:insert
         self.set.insert(&mut addend_note, true);
@@ -157,7 +170,7 @@ pub fn filter_notes_unattested(notes: [Option<TokenNote>; MAX_READ_REQUESTS_PER_
     for i in 0..notes.len() {
         if notes[i].is_some() {
             let attestations = notes[i].unwrap_unchecked().partition_table.attestations;
-            if !contains(attestations, attestor) {
+            if !attestations.contains(attestor.address) {
                 selected[i] = notes[i];
             }
         }

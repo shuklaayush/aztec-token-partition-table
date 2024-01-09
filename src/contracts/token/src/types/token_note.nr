@@ -20,7 +20,8 @@ use dep::aztec::oracle::{
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
-use crate::types::partition_table::{PartitionTable, MAX_SHIELD_IDS_LEN};
+use crate::types::partition_table::PartitionTable;
+use crate::types::vec::Vec;
 
 global TOKEN_NOTE_LEN: Field = 25; // 3 + 22 (PT) plus a header.
 
@@ -41,12 +42,12 @@ struct TokenNote {
 }
 
 impl TokenNote {
-    pub fn new(amount: SafeU120, owner: AztecAddress, shield_ids: [Field; MAX_SHIELD_IDS_LEN]) -> Self {
+    pub fn new(amount: SafeU120, owner: AztecAddress, partition_table: PartitionTable) -> Self {
         Self {
             amount,
             owner,
             randomness: rand(),
-            partition_table: PartitionTable::new(shield_ids),
+            partition_table,
             header: NoteHeader::empty(),
         }
     }

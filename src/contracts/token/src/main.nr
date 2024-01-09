@@ -370,19 +370,19 @@ contract Token {
 
     // TODO: Recursively call `request_attestation` until all attestations are received?
     #[aztec(private)]
-    fn request_attestation(attestor: AztecAddress) -> bool {
+    fn request_attestation(attestor: AztecAddress) { // -> bool {
         let from = AztecAddress::new(context.msg_sender());
 
-        let note = storage.balances.at(from).last_unattested_note(attestor);
-        let mut res = false;
-        if note.is_some() {
-            let shield_ids = note.unwrap_unchecked().partition_table.shield_ids;
-            // res = Attestor::at(attestor.address).request_attestation(&mut context, shield_ids)[0] as bool;
+        let balances_set = storage.balances.at(from);
+        let maybe_note = balances_set.last_unattested_note(attestor);
+        if maybe_note.is_some() {
+            let note = maybe_note.unwrap_unchecked();
+            let shield_ids = note.partition_table.shield_ids;
+            // TODO: Use slow updates tree
+            let _void = Attestor::at(attestor.address).assert_attestation(&mut context, shield_ids.elems);
+            
+            balances_set.add_attestation(note, attestor);
         }
-        // if res {
-        //     note.parition_table.add_attestation(attestor);
-        // }
-        res
     }
 
     // #[aztec(private)]

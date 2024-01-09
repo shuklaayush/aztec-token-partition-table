@@ -114,6 +114,17 @@ contract Attestor {
         res
     }
     
+    #[aztec(public)]
+    fn assert_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) {
+        let token = AztecAddress::new(context.msg_sender());
+
+        for i in 0..partition_table.len() {
+            if storage.blacklists.at(token.address).read().contains(partition_table[i]) {
+                assert(false, "intersects");
+            }
+        }
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////
     // PRIVATE
     ////////////////////////////////////////////////////////////////////////////////

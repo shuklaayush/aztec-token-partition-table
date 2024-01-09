@@ -39,6 +39,27 @@ impl AttestorPrivateContextInterface {
   }
   
 
+  pub fn assert_attestation(
+    self,
+    context: &mut PrivateContext,
+    partition_table: [Field;10]
+  ) {
+    let mut serialized_args = [0; 10];
+    serialized_args[0] = partition_table[0];
+    serialized_args[1] = partition_table[1];
+    serialized_args[2] = partition_table[2];
+    serialized_args[3] = partition_table[3];
+    serialized_args[4] = partition_table[4];
+    serialized_args[5] = partition_table[5];
+    serialized_args[6] = partition_table[6];
+    serialized_args[7] = partition_table[7];
+    serialized_args[8] = partition_table[8];
+    serialized_args[9] = partition_table[9];
+
+    context.call_public_function(self.address, 0x896adbdf, serialized_args)
+  }
+  
+
   pub fn remove_from_blacklist(
     self,
     context: &mut PrivateContext,
@@ -101,6 +122,27 @@ impl AttestorPublicContextInterface {
     serialized_args[1] = shield_id;
 
     context.call_public_function(self.address, 0xb7c54e4d, serialized_args)
+  }
+  
+
+  pub fn assert_attestation(
+    self,
+    context: PublicContext,
+    partition_table: [Field;10]
+  ) -> [Field; RETURN_VALUES_LENGTH] {
+    let mut serialized_args = [0; 10];
+    serialized_args[0] = partition_table[0];
+    serialized_args[1] = partition_table[1];
+    serialized_args[2] = partition_table[2];
+    serialized_args[3] = partition_table[3];
+    serialized_args[4] = partition_table[4];
+    serialized_args[5] = partition_table[5];
+    serialized_args[6] = partition_table[6];
+    serialized_args[7] = partition_table[7];
+    serialized_args[8] = partition_table[8];
+    serialized_args[9] = partition_table[9];
+
+    context.call_public_function(self.address, 0x896adbdf, serialized_args)
   }
   
 
