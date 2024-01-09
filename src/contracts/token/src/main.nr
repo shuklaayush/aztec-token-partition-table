@@ -373,15 +373,14 @@ contract Token {
     fn request_attestation(attestor: AztecAddress) { // -> bool {
         let from = AztecAddress::new(context.msg_sender());
 
-        let balances_set = storage.balances.at(from);
-        let maybe_note = balances_set.last_unattested_note(attestor);
+        let maybe_note = storage.balances.at(from).last_unattested_note(attestor);
         if maybe_note.is_some() {
             let note = maybe_note.unwrap_unchecked();
             let shield_ids = note.partition_table.shield_ids;
             // TODO: Use slow updates tree
             let _void = Attestor::at(attestor.address).assert_attestation(&mut context, shield_ids.elems);
             
-            balances_set.add_attestation(note, attestor);
+            storage.balances.at(from).add_attestation(note, attestor);
         }
     }
 

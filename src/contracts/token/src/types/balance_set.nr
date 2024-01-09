@@ -107,9 +107,9 @@ impl BalanceSet {
         let partition_table = PartitionTable::new(shield_ids, attestations);
 
         let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
-
-        // self.set.remove(note);
-        // self.set.insert(&mut new_note, true);
+        
+        self.set.remove(note);
+        self.set.insert(&mut new_note, true);
     }
 
     pub fn add(self: Self, addend: SafeU120) {
