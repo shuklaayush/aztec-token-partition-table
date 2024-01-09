@@ -82,8 +82,8 @@ export class TokenContract extends ContractBase {
     /** _increase_public_balance(to: struct, amount: field) */
     _increase_public_balance: ((to: AztecAddressLike, amount: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** _increment_shields_counter() */
-    _increment_shields_counter: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** _increment_num_shields() */
+    _increment_num_shields: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** _initialize(new_admin: struct) */
     _initialize: ((new_admin: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
@@ -118,6 +118,9 @@ export class TokenContract extends ContractBase {
     /** mint_public(to: struct, amount: field) */
     mint_public: ((to: AztecAddressLike, amount: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
+    /** num_shields() */
+    num_shields: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+
     /** redeem_shield(to: struct, amount: field, secret: field) */
     redeem_shield: ((to: AztecAddressLike, amount: FieldLike, secret: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
@@ -129,9 +132,6 @@ export class TokenContract extends ContractBase {
 
     /** shield(from: struct, amount: field, secret_hash: field, nonce: field) */
     shield: ((from: AztecAddressLike, amount: FieldLike, secret_hash: FieldLike, nonce: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
-
-    /** shields_counter() */
-    shields_counter: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** total_supply() */
     total_supply: (() => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;

@@ -27,7 +27,6 @@ contract Token {
         types::type_serialization::{
             field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
-            u32_serialization::{U32SerializationMethods, U32_SERIALIZED_LEN},
             aztec_address_serialization::{AztecAddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
         },
         types::address::{AztecAddress},
@@ -68,7 +67,7 @@ contract Token {
         // docs:end:storage_pending_shields
         public_balances: Map<PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>>,
         // total number of shielded notes
-        shields_counter: PublicState<u32, U32_SERIALIZED_LEN>,
+        num_shields: PublicState<Field, FIELD_SERIALIZED_LEN>,
     }
     // docs:end:storage_struct
 
@@ -116,10 +115,10 @@ contract Token {
                         )
                     },
                 ),
-                shields_counter: PublicState::new(
+                num_shields: PublicState::new(
                     context,
                     7,
-                    U32SerializationMethods,
+                    FieldSerializationMethods,
                 ),
             }
         }
@@ -291,7 +290,7 @@ contract Token {
 
         storage.balances.at(to).add(SafeU120::new(amount));
 
-        let selector = compute_selector("_increment_shields_counter()");
+        let selector = compute_selector("_increment_num_shields()");
         let _void = context.call_public_function(context.this_address(), selector, []);
         
         1
@@ -401,9 +400,9 @@ contract Token {
     // docs:end:reduce_total_supply
 
     #[aztec(public)]
-    internal fn _increment_shields_counter() {
-        let counter = storage.shields_counter.read() + 1;
-        storage.shields_counter.write(counter);
+    internal fn _increment_num_shields() {
+        let counter = storage.num_shields.read() + 1;
+        storage.num_shields.write(counter);
     }
     
     /// Unconstrained ///
@@ -444,8 +443,8 @@ contract Token {
     }
     // docs:end:balance_of_public
 
-    unconstrained fn shields_counter() -> u32 {
-        storage.shields_counter.read()
+    unconstrained fn num_shields() -> Field {
+        storage.num_shields.read()
     }
 
     // Below this point is the stuff of nightmares.

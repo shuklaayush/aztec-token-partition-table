@@ -221,8 +221,8 @@ describe("e2e_token_contract", () => {
           expect(receiptClaim.status).toBe(TxStatus.MINED);
           tokenSim.redeemShield(accounts[0].address, amount);
 
-          expect(await asset.methods.shields_counter().view()).toEqual(
-            tokenSim.shieldsCounter
+          expect(await asset.methods.num_shields().view()).toEqual(
+            1n
           );
         });
       });

@@ -5,7 +5,7 @@ export class TokenSimulator {
   private balancesPrivate: Map<AztecAddress, bigint> = new Map();
   private balancePublic: Map<AztecAddress, bigint> = new Map();
   public totalSupply: bigint = 0n;
-  public shieldsCounter: bigint = 0n;
+  public numShields: bigint = 0n;
 
   constructor(
     protected token: TokenContract,
@@ -51,7 +51,7 @@ export class TokenSimulator {
     const toBalance = this.balancesPrivate.get(to) || 0n;
     this.balancesPrivate.set(to, toBalance + amount);
 
-    this.shieldsCounter += 1n;
+    this.numShields += 1n;
   }
 
   public unshield(from: AztecAddress, to: AztecAddress, amount: bigint) {
