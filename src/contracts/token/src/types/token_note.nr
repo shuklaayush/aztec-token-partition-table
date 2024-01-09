@@ -20,10 +20,10 @@ use dep::aztec::oracle::{
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
-use crate::types::partition_table::PartitionTable;
+use crate::types::partition_table::{PartitionTable, PARTITION_TABLE_LEN};
 use crate::types::vec::Vec;
 
-global TOKEN_NOTE_LEN: Field = 25; // 3 + 22 (PT) plus a header.
+global TOKEN_NOTE_LEN: Field = 28; // 3 + 24 (PT) plus a header.
 
 struct TokenNote {
     // the amount of tokens in the note
@@ -59,7 +59,7 @@ impl TokenNote {
         serialized_note[2] = self.randomness;
 
         let partition_table_serialized = self.partition_table.serialize();
-        for i in 0..partition_table_serialized.len() {
+        for i in 0..PARTITION_TABLE_LEN {
             serialized_note[i + 3] = partition_table_serialized[i];
         }
 
@@ -67,12 +67,15 @@ impl TokenNote {
     }
 
     pub fn deserialize(serialized_note: [Field; TOKEN_NOTE_LEN]) -> Self {
+        let mut partition_table_serialized = [0; PARTITION_TABLE_LEN];
+        for i in 0..PARTITION_TABLE_LEN {
+            partition_table_serialized[i] = serialized_note[i + 3];
+        }
         Self {
             amount: SafeU120::new(serialized_note[0]),
             owner: AztecAddress::new(serialized_note[1]),
             randomness: serialized_note[2],
-            // TODO
-            partition_table: PartitionTable::empty(),
+            partition_table: PartitionTable::deserialize(partition_table_serialized),
             header: NoteHeader::empty(),
         }
     }

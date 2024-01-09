@@ -1,5 +1,5 @@
 global N: Field = 10;
-global N_PLUS_ONE: Field = 10;
+global N_PLUS_ONE: Field = 11;
 
 struct Vec {
     len: Field,
@@ -35,7 +35,7 @@ impl Vec {
         res
     }
 
-    pub fn serlialize(self) -> [Field; N_PLUS_ONE] {
+    pub fn serialize(self) -> [Field; N_PLUS_ONE] {
         let mut res = [0; N_PLUS_ONE];
         res[0] = self.len;
         for i in 0..N {
@@ -44,7 +44,7 @@ impl Vec {
         res
     }
 
-    pub fn deserlialize(serialized: [Field; N_PLUS_ONE]) -> Self {
+    pub fn deserialize(serialized: [Field; N_PLUS_ONE]) -> Self {
         let mut res = Vec::empty();
         res.len = serialized[0];
         for i in 0..N {

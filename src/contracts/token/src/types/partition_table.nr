@@ -1,9 +1,9 @@
 use dep::aztec::types::address::AztecAddress;
 use dep::safe_math::SafeU120;
 
-use crate::types::vec::{Vec, N};
+use crate::types::vec::{Vec, N, N_PLUS_ONE};
 
-global PARTITION_TABLE_LEN: Field = 22;
+global PARTITION_TABLE_LEN: Field = 24;
 
 // struct Shield {
 //     shield_id: Field,
@@ -39,22 +39,53 @@ impl PartitionTable {
         }
     }
 
-    // TODO: Proper serialization that stores length
     pub fn serialize(self) -> [Field; PARTITION_TABLE_LEN] {
         let mut res = [0; PARTITION_TABLE_LEN];
         let mut offset = 0;
-        for i in 0..N {
-            res[i + offset] = self.shield_ids.elems[i];
+
+        let shield_ids_serialized = self.shield_ids.serialize();
+        for i in 0..N_PLUS_ONE {
+            res[i + offset] = shield_ids_serialized[i];
         }
-        offset += N;
-        for i in 0..N {
-            res[i + offset] = self.attestations.elems[i];
+        offset += N_PLUS_ONE;
+
+        let attestations_serialized = self.attestations.serialize();
+        for i in 0..N_PLUS_ONE {
+            res[i + offset] = attestations_serialized[i];
         }
-        offset += N;
+        offset += N_PLUS_ONE;
+
         res[offset] = self.max_block_number;
         offset += 1;
+
         res[offset] = self.is_table_cleared as Field;
         
+        res
+    }
+
+    pub fn deserialize(serialized: [Field; PARTITION_TABLE_LEN]) -> Self {
+        let mut res = PartitionTable::empty();
+        let mut offset = 0;
+
+        let mut shield_ids_serialized = [0; N_PLUS_ONE];
+        for i in 0..N_PLUS_ONE {
+            shield_ids_serialized[i] = serialized[i + offset];
+        }
+        res.shield_ids = Vec::deserialize(shield_ids_serialized);
+        offset += N_PLUS_ONE;
+
+        let mut attestations_serialized = [0; N_PLUS_ONE];
+        for i in 0..N_PLUS_ONE {
+            attestations_serialized[i] = serialized[i + offset];
+        }
+        res.attestations = Vec::deserialize(attestations_serialized);
+        offset += N_PLUS_ONE;
+
+        res.max_block_number = serialized[offset];
+        offset += 1;
+
+        res.is_table_cleared = serialized[offset] as bool;
+
         res
     }
 }

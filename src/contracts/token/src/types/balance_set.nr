@@ -21,6 +21,7 @@ use dep::aztec::oracle::{
     get_secret_key::get_secret_key,
     get_public_key::get_public_key,
 };
+// use dep::aztec::oracle::debug_log::debug_log;
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
 use crate::types::partition_table::PartitionTable;
