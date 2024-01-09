@@ -71,7 +71,33 @@ impl BalanceSet {
       }
 
       balance
-  }
+    }
+
+    unconstrained fn has_attestation(self: Self, attestor: AztecAddress) -> bool {
+        let options = NoteViewerOptions::new();
+        let maybe_notes = self.set.view_notes(options);
+        let mut res = false;
+        for i in 0..maybe_notes.len() {
+            if maybe_notes[i].is_some() {
+                let attestations = maybe_notes[i].unwrap_unchecked().partition_table.attestations;
+                res = contains(attestations, attestor);
+            }
+        }
+        res
+    }
+
+    pub fn last_unattested_note(self: Self, attestor: AztecAddress) -> Option<TokenNote> {
+        let options = NoteGetterOptions::with_filter(filter_notes_unattested, attestor);
+        let maybe_notes = self.set.get_notes(options);
+
+        let mut selected = Option::none();
+        for i in 0..maybe_notes.len() {
+            if maybe_notes[i].is_some() {
+                selected = maybe_notes[i];
+            }
+        }
+        selected
+    }
 
     pub fn add(self: Self, addend: SafeU120) {
         let mut addend_note = TokenNote::new(addend, self.owner, [0; MAX_SHIELD_IDS_LEN]);
@@ -124,4 +150,31 @@ pub fn filter_notes_min_sum(notes: [Option<TokenNote>; MAX_READ_REQUESTS_PER_CAL
         }
     }
     selected
+}
+
+pub fn filter_notes_unattested(notes: [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL], attestor: AztecAddress) -> [Option<TokenNote>; MAX_READ_REQUESTS_PER_CALL] {
+    let mut selected = [Option::none(); MAX_READ_REQUESTS_PER_CALL];
+    for i in 0..notes.len() {
+        if notes[i].is_some() {
+            let attestations = notes[i].unwrap_unchecked().partition_table.attestations;
+            if !contains(attestations, attestor) {
+                selected[i] = notes[i];
+            }
+        }
+    }
+    selected
+}
+
+// TODO: Unconstrained
+pub fn contains<N>(
+    arr: [AztecAddress; N],
+    addr: AztecAddress
+) -> bool {
+    let mut res = false;
+    for i in 0..arr.len() {
+        if arr[i].eq(addr) {
+            res = true;
+        }
+    }
+    res
 }

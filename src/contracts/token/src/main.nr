@@ -1,5 +1,6 @@
 // docs:start:token_all
 // docs:start:imports
+mod interfaces;
 mod types;
 
 // Minimal token implementation that supports `AuthWit` accounts.
@@ -42,12 +43,14 @@ contract Token {
     };
     // docs:end:import_authwit
 
+    use crate::interfaces::Attestor_interface::AttestorPrivateContextInterface as Attestor;
     use crate::types::{
         transparent_note::{TransparentNote, TransparentNoteMethods, TRANSPARENT_NOTE_LEN},
         token_note::{TokenNote, TokenNoteMethods, TOKEN_NOTE_LEN},
         balances_map::{BalancesMap},
         safe_u120_serialization::{SafeU120SerializationMethods, SAFE_U120_SERIALIZED_LEN}
     };
+
     // docs:end::imports
 
     // docs:start:storage_struct
@@ -365,6 +368,31 @@ contract Token {
     }
     // docs:end:burn
 
+    // TODO: Recursively call `request_attestation` until all attestations are received?
+    #[aztec(private)]
+    fn request_attestation(attestor: AztecAddress) -> bool {
+        let from = AztecAddress::new(context.msg_sender());
+
+        let note = storage.balances.at(from).last_unattested_note(attestor);
+        let mut res = false;
+        if note.is_some() {
+            let shield_ids = note.unwrap_unchecked().partition_table.shield_ids;
+            // res = Attestor::at(attestor.address).request_attestation(&mut context, shield_ids)[0] as bool;
+        }
+        // if res {
+        //     note.parition_table.add_attestation(attestor);
+        // }
+        res
+    }
+
+    // #[aztec(private)]
+    // fn has_attestation(attestor: AztecAddress) -> bool {
+    //     let from = AztecAddress::new(context.msg_sender());
+
+    //     let note = storage.balances.at(from).last_unattested_note(attestor);
+    //     note.is_none()
+    // }
+
     // docs:start:initialize
     #[aztec(public)]
     internal fn _initialize(
@@ -445,6 +473,13 @@ contract Token {
 
     unconstrained fn num_shields() -> Field {
         storage.num_shields.read()
+    }
+
+    unconstrained fn has_attestation(
+        owner: AztecAddress,
+        attestor: AztecAddress,
+    ) -> bool {
+        storage.balances.at(owner).has_attestation(attestor)
     }
 
     // Below this point is the stuff of nightmares.

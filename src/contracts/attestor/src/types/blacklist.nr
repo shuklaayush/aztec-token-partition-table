@@ -40,11 +40,12 @@ impl Blacklist {
 // TODO: Use merkle tree intersection/non-intersection check
 pub fn contains<N>(
     arr: [Field; N],
-    addr: Field,
+    elem: Field,
 ) -> bool {
     let mut res = false;
     for i in 0..N {
-        if arr[i] == addr {
+        // TODO: Use u32 at places if required
+        if (elem as u32 > 0 as u32) & (arr[i] == elem) {
             res = true;
         }
     }

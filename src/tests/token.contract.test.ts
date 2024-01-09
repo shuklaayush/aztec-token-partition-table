@@ -1,3 +1,5 @@
+import { AttestorContract } from "../artifacts/Attestor.js";
+import { AttestorSimulator } from "./attestor_simulator.js";
 import { TokenContract } from "../artifacts/Token.js";
 import { TokenSimulator } from "./token_simulator.js";
 import {
@@ -37,7 +39,9 @@ describe("e2e_token_contract", () => {
   let logger: DebugLogger;
 
   let asset: TokenContract;
+  let attestor: AttestorContract;
 
+  let attestorSim: AttestorSimulator;
   let tokenSim: TokenSimulator;
   let pxe: PXE;
 
@@ -1419,6 +1423,59 @@ describe("e2e_token_contract", () => {
           );
         });
       });
+    });
+  });
+
+  describe("Attestations", () => {
+    const secret = Fr.random();
+    const amount = 10000n;
+    let secretHash: Fr;
+    let txHash: TxHash;
+
+    beforeAll(async () => {
+      secretHash = computeMessageSecretHash(secret);
+      const tx = asset.methods.mint_private(amount, secretHash).send();
+      const receipt = await tx.wait();
+      expect(receipt.status).toBe(TxStatus.MINED);
+
+      tokenSim.mintPrivate(amount);
+      txHash = receipt.txHash;
+      await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
+
+      const txClaim = asset.methods
+        .redeem_shield(accounts[0].address, amount, secret)
+        .send();
+      const receiptClaim = await txClaim.wait();
+      expect(receiptClaim.status).toBe(TxStatus.MINED);
+      tokenSim.redeemShield(accounts[0].address, amount);
+
+      attestor = await AttestorContract.deploy(wallets[0], accounts[0].address)
+        .send()
+        .deployed();
+      logger(`Attestor deployed to ${attestor.address}`);
+      attestorSim = new AttestorSimulator(
+        attestor,
+        logger,
+        accounts.map((a) => a.address),
+      );
+    }, 100_000);
+
+    it("Has attestation", async () => {
+        expect(await asset.methods
+          .has_attestation(accounts[0].address, attestor.address)
+          .view()).toBe(false);
+    });
+
+    it("Request attestation", async () => {
+        const txClaim = asset.methods
+          .request_attestation(attestor.address)
+          .send();
+        const receiptClaim = await txClaim.wait();
+        expect(receiptClaim.status).toBe(TxStatus.MINED);
+
+        expect(await asset.methods
+          .has_attestation(accounts[0].address, attestor.address)
+          .view()).toBe(true);
     });
   });
 });
