@@ -115,6 +115,9 @@ export class TokenContract extends ContractBase {
     /** is_minter(minter: struct) */
     is_minter: ((minter: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
+    /** last_unattested_note(owner: struct, attestor: struct) */
+    last_unattested_note: ((owner: AztecAddressLike, attestor: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+
     /** mint_private(amount: field, secret_hash: field) */
     mint_private: ((amount: FieldLike, secret_hash: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
@@ -127,8 +130,8 @@ export class TokenContract extends ContractBase {
     /** redeem_shield(to: struct, amount: field, secret: field) */
     redeem_shield: ((to: AztecAddressLike, amount: FieldLike, secret: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** request_attestation(attestor: struct) */
-    request_attestation: ((attestor: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** request_attestation(note: struct, attestor: struct) */
+    request_attestation: ((note: { amount: { value: (bigint | number) }, owner: AztecAddressLike, randomness: FieldLike, partition_table: { shield_ids: { len: FieldLike, elems: FieldLike[] }, attestations: { len: FieldLike, elems: FieldLike[] }, max_block_number: FieldLike, is_table_cleared: boolean }, header: { contract_address: FieldLike, nonce: FieldLike, storage_slot: FieldLike, is_transient: boolean } }, attestor: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** set_admin(new_admin: struct) */
     set_admin: ((new_admin: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;

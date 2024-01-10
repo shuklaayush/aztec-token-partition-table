@@ -370,18 +370,14 @@ contract Token {
 
     // TODO: Recursively call `request_attestation` until all attestations are received?
     #[aztec(private)]
-    fn request_attestation(attestor: AztecAddress) { // -> bool {
-        let from = AztecAddress::new(context.msg_sender());
+    fn request_attestation(note: TokenNote, attestor: AztecAddress) {
+        // let from = AztecAddress::new(context.msg_sender());
 
-        let maybe_note = storage.balances.at(from).last_unattested_note(attestor);
-        if maybe_note.is_some() {
-            let note = maybe_note.unwrap_unchecked();
-            let shield_ids = note.partition_table.shield_ids;
-            // TODO: Use slow updates tree
-            let _void = Attestor::at(attestor.address).assert_attestation(&mut context, shield_ids.elems);
-            
-            storage.balances.at(from).add_attestation(note, attestor);
-        }
+        // let shield_ids = note.partition_table.shield_ids;
+        // TODO: Use slow updates tree
+        // let _void = Attestor::at(attestor.address).assert_attestation(&mut context, shield_ids.elems);
+        
+        // storage.balances.at(from).add_attestation(note, attestor);
     }
 
     // #[aztec(private)]
@@ -479,6 +475,13 @@ contract Token {
         attestor: AztecAddress,
     ) -> bool {
         storage.balances.at(owner).has_attestation(attestor)
+    }
+
+    unconstrained fn last_unattested_note(
+        owner: AztecAddress,
+        attestor: AztecAddress,
+    ) -> Option<TokenNote> {
+        storage.balances.at(owner).last_unattested_note_unc(attestor)
     }
 
     // Below this point is the stuff of nightmares.

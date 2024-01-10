@@ -74,7 +74,7 @@ impl BalanceSet {
       balance
     }
 
-    unconstrained fn has_attestation(self: Self, attestor: AztecAddress) -> bool {
+    unconstrained pub fn has_attestation(self: Self, attestor: AztecAddress) -> bool {
         let options = NoteViewerOptions::new();
         let maybe_notes = self.set.view_notes(options);
         let mut res = false;
@@ -85,6 +85,22 @@ impl BalanceSet {
             }
         }
         res
+    }
+
+    unconstrained pub fn last_unattested_note_unc(self: Self, attestor: AztecAddress) -> Option<TokenNote> {
+        let options = NoteViewerOptions::new();
+        let maybe_notes = self.set.view_notes(options);
+
+        let mut selected = Option::none();
+        for i in 0..maybe_notes.len() {
+            if maybe_notes[i].is_some() {
+                let attestations = maybe_notes[i].unwrap_unchecked().partition_table.attestations;
+                if !attestations.contains(attestor.address) {
+                    selected = maybe_notes[i];
+                }
+            }
+        }
+        selected
     }
 
     pub fn last_unattested_note(self: Self, attestor: AztecAddress) -> Option<TokenNote> {
@@ -109,8 +125,8 @@ impl BalanceSet {
 
         let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
         
-        self.set.remove(note);
-        self.set.insert(&mut new_note, true);
+        // self.set.remove(note);
+        // self.set.insert(&mut new_note, true);
     }
 
     pub fn add(self: Self, addend: SafeU120) {

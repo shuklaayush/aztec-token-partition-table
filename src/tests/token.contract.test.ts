@@ -1467,8 +1467,12 @@ describe("e2e_token_contract", () => {
     });
 
     it("Request attestation", async () => {
+        const note = await asset.methods
+          .last_unattested_note(accounts[0].address, attestor.address)
+          .view();
+
         const txClaim = asset.methods
-          .request_attestation(attestor.address)
+          .request_attestation(note._value, attestor.address)
           .send();
         const receiptClaim = await txClaim.wait();
         expect(receiptClaim.status).toBe(TxStatus.MINED);
