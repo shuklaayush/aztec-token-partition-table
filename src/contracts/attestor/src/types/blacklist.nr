@@ -38,10 +38,7 @@ impl Blacklist {
 
 // docs:end:field_serialization
 // TODO: Use merkle tree intersection/non-intersection check
-pub fn contains<N>(
-    arr: [Field; N],
-    elem: Field,
-) -> bool {
+pub fn contains<N>(arr: [Field; N], elem: Field) -> bool {
     let mut res = false;
     for i in 0..N {
         // TODO: Use u32 at places if required

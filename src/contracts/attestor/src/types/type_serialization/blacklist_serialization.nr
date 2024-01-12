@@ -6,7 +6,7 @@ global BLACKLIST_SERIALIZED_LEN: Field = 11;
 
 fn deserializeBlacklist(serialized: [Field; BLACKLIST_SERIALIZED_LEN]) -> Blacklist {
     let mut res = Blacklist::empty();
-    res.count = serialized[0]; 
+    res.count = serialized[0];
     for i in 0..MAX_BLACKLIST_LEN {
         res.shield_ids[i] = serialized[i + 1];
     }
