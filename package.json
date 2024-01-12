@@ -5,28 +5,27 @@
   "type": "module",
   "main": "./dest/index.js",
   "scripts": {
-    "build": "yarn clean && tsc -b && webpack",
-    "install:noir": "curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash noirup -v v0.18.0-aztec.5",
-    "install:sandbox": "docker pull aztecprotocol/aztec-sandbox:0.16.9",
-    "clean": "rm -rf ./dest .tsbuildinfo",
-    "start:sandbox": "SANDBOX_VERSION=0.16.9 /bin/bash -c \"$(curl -fsSL 'https://sandbox.aztec.network')\" ",
+    "build": "yarn clean && yarn compile && yarn codegen && tsc -b && webpack",
+    "clean": "rm -rf ./dest .tsbuildinfo ./src/artifacts ./src/contracts/target",
     "formatting": "prettier --check ./src && eslint ./src",
     "formatting:fix": "prettier -w ./src",
-    "compile": "yarn compile:token && yarn compile:attestor",
-    "compile:attestor": "aztec-cli compile src/contracts/attestor --outdir ../../artifacts --typescript ../../artifacts --interface \"../token/src/interfaces\"",
-    "compile:token": "aztec-cli compile src/contracts/token --outdir ../../artifacts --typescript ../../artifacts",
-    "compile:local": "ts-node --esm ../aztec-packages/yarn-project/cli/src/bin/index.ts compile \"src/contracts/token\" --outdir \"../../artifacts\" --typescript \"../../artifacts\"",
-    "test:integration": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --runInBand"
+    "compile": "yarn compile:attestor && yarn compile:token",
+    "codegen": "yarn codegen:attestor && yarn codegen:token",
+    "compile:attestor": "cd src/contracts/attestor && aztec-nargo compile",
+    "compile:token": "cd src/contracts/token && aztec-nargo compile",
+    "codegen:attestor": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/attestor/target && aztec-cli codegen --outdir src/contracts/token/src/interfaces --nr src/contracts/attestor/target",
+    "codegen:token": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/token/target",
+    "test": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --runInBand"
   },
   "jest": {
     "preset": "ts-jest/presets/default-esm",
-    "globals": {
-      "ts-jest": {
-        "useESM": true
-      }
-    },
     "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
+      "^.+\\.(ts|tsx)$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
     },
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"

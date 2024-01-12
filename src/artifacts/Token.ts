@@ -16,6 +16,7 @@ import {
   EthAddressLike,
   FieldLike,
   Fr,
+  FunctionSelectorLike,
   Point,
   PublicKey,
   Wallet,
@@ -56,14 +57,14 @@ export class TokenContract extends ContractBase {
    * Creates a tx to deploy a new instance of this contract.
    */
   public static deploy(wallet: Wallet, admin: AztecAddressLike) {
-    return new DeployMethod<TokenContract>(Point.ZERO, wallet, TokenContractArtifact, Array.from(arguments).slice(1));
+    return new DeployMethod<TokenContract>(Point.ZERO, wallet, TokenContractArtifact, TokenContract.at, Array.from(arguments).slice(1));
   }
 
   /**
    * Creates a tx to deploy a new instance of this contract using the specified public key to derive the address.
    */
   public static deployWithPublicKey(publicKey: PublicKey, wallet: Wallet, admin: AztecAddressLike) {
-    return new DeployMethod<TokenContract>(publicKey, wallet, TokenContractArtifact, Array.from(arguments).slice(2));
+    return new DeployMethod<TokenContract>(publicKey, wallet, TokenContractArtifact, TokenContract.at, Array.from(arguments).slice(2));
   }
   
 
@@ -106,8 +107,8 @@ export class TokenContract extends ContractBase {
     /** burn_public(from: struct, amount: field, nonce: field) */
     burn_public: ((from: AztecAddressLike, amount: FieldLike, nonce: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** compute_note_hash_and_nullifier(contract_address: field, nonce: field, storage_slot: field, serialized_note: array) */
-    compute_note_hash_and_nullifier: ((contract_address: FieldLike, nonce: FieldLike, storage_slot: FieldLike, serialized_note: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** compute_note_hash_and_nullifier(contract_address: struct, nonce: field, storage_slot: field, serialized_note: array) */
+    compute_note_hash_and_nullifier: ((contract_address: AztecAddressLike, nonce: FieldLike, storage_slot: FieldLike, serialized_note: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** has_attestation(owner: struct, attestor: struct) */
     has_attestation: ((owner: AztecAddressLike, attestor: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
@@ -131,7 +132,7 @@ export class TokenContract extends ContractBase {
     redeem_shield: ((to: AztecAddressLike, amount: FieldLike, secret: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** request_attestation(note: struct, attestor: struct) */
-    request_attestation: ((note: { amount: { value: (bigint | number) }, owner: AztecAddressLike, randomness: FieldLike, partition_table: { shield_ids: { len: FieldLike, elems: FieldLike[] }, attestations: { len: FieldLike, elems: FieldLike[] }, max_block_number: FieldLike, is_table_cleared: boolean }, header: { contract_address: FieldLike, nonce: FieldLike, storage_slot: FieldLike, is_transient: boolean } }, attestor: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    request_attestation: ((note: { amount: { value: (bigint | number) }, owner: AztecAddressLike, randomness: FieldLike, partition_table: { shield_ids: { len: FieldLike, elems: FieldLike[] }, attestations: { len: FieldLike, elems: FieldLike[] }, max_block_number: FieldLike, is_table_cleared: boolean }, header: { contract_address: AztecAddressLike, nonce: FieldLike, storage_slot: FieldLike, is_transient: boolean } }, attestor: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** set_admin(new_admin: struct) */
     set_admin: ((new_admin: AztecAddressLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;

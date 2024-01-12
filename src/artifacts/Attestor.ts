@@ -16,6 +16,7 @@ import {
   EthAddressLike,
   FieldLike,
   Fr,
+  FunctionSelectorLike,
   Point,
   PublicKey,
   Wallet,
@@ -56,14 +57,14 @@ export class AttestorContract extends ContractBase {
    * Creates a tx to deploy a new instance of this contract.
    */
   public static deploy(wallet: Wallet, admin: AztecAddressLike) {
-    return new DeployMethod<AttestorContract>(Point.ZERO, wallet, AttestorContractArtifact, Array.from(arguments).slice(1));
+    return new DeployMethod<AttestorContract>(Point.ZERO, wallet, AttestorContractArtifact, AttestorContract.at, Array.from(arguments).slice(1));
   }
 
   /**
    * Creates a tx to deploy a new instance of this contract using the specified public key to derive the address.
    */
   public static deployWithPublicKey(publicKey: PublicKey, wallet: Wallet, admin: AztecAddressLike) {
-    return new DeployMethod<AttestorContract>(publicKey, wallet, AttestorContractArtifact, Array.from(arguments).slice(2));
+    return new DeployMethod<AttestorContract>(publicKey, wallet, AttestorContractArtifact, AttestorContract.at, Array.from(arguments).slice(2));
   }
   
 
@@ -91,8 +92,8 @@ export class AttestorContract extends ContractBase {
     /** assert_attestation(partition_table: array) */
     assert_attestation: ((partition_table: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
-    /** compute_note_hash_and_nullifier(contract_address: field, nonce: field, storage_slot: field, serialized_note: array) */
-    compute_note_hash_and_nullifier: ((contract_address: FieldLike, nonce: FieldLike, storage_slot: FieldLike, serialized_note: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
+    /** compute_note_hash_and_nullifier(contract_address: struct, nonce: field, storage_slot: field, serialized_note: array) */
+    compute_note_hash_and_nullifier: ((contract_address: AztecAddressLike, nonce: FieldLike, storage_slot: FieldLike, serialized_note: FieldLike[]) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
 
     /** is_blacklisted(token: struct, shield_id: field) */
     is_blacklisted: ((token: AztecAddressLike, shield_id: FieldLike) => ContractFunctionInteraction) & Pick<ContractMethod, 'selector'>;
