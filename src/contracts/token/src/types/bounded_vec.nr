@@ -1,11 +1,11 @@
 global N: Field = 10;
 
-struct Vec {
+struct BoundedVec {
     len: Field,
     elems: [Field; N],
 }
 
-impl Vec {
+impl BoundedVec {
     pub fn empty() -> Self {
         Self {
             len: 0,
@@ -44,7 +44,7 @@ impl Vec {
     }
 
     pub fn deserialize(serialized: [Field; N+1]) -> Self {
-        let mut res = Vec::empty();
+        let mut res = BoundedVec::empty();
         res.len = serialized[0];
         for i in 0..N {
             res.elems[i] = serialized[i + 1];

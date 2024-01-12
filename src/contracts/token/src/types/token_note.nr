@@ -24,7 +24,7 @@ use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
 use crate::types::partition_table::{PartitionTable, PARTITION_TABLE_LEN};
-use crate::types::vec::Vec;
+use crate::types::bounded_vec::BoundedVec;
 
 global TOKEN_NOTE_LEN: Field = 28; // 3 + 24 (PT) plus a header.
 

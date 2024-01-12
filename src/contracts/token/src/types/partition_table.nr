@@ -1,7 +1,7 @@
-use dep::aztec::types::address::AztecAddress;
+use dep::protocol_types::address::AztecAddress;
 use dep::safe_math::SafeU120;
 
-use crate::types::vec::{Vec, N};
+use crate::types::bounded_vec::{BoundedVec, N};
 
 global PARTITION_TABLE_LEN: Field = 24;
 
@@ -12,16 +12,16 @@ global PARTITION_TABLE_LEN: Field = 24;
 
 struct PartitionTable {
     // Stores the origin shield deposit IDs
-    shield_ids: Vec,
+    shield_ids: BoundedVec,
     // Stores the attestations collected
-    attestations: Vec, 
+    attestations: BoundedVec, 
     // The older the block number, the less risky the shield is
     max_block_number: Field, 
     is_table_cleared: bool,
 }
 
 impl PartitionTable {
-    pub fn new(shield_ids: Vec, attestations: Vec) -> Self {
+    pub fn new(shield_ids: BoundedVec, attestations: BoundedVec) -> Self {
         Self {
             shield_ids,
             attestations,
@@ -32,8 +32,8 @@ impl PartitionTable {
 
     pub fn empty() -> Self {
         Self {
-            shield_ids: Vec::empty(),
-            attestations: Vec::empty(),
+            shield_ids: BoundedVec::empty(),
+            attestations: BoundedVec::empty(),
             max_block_number: 0,
             is_table_cleared: false,
         }
@@ -71,14 +71,14 @@ impl PartitionTable {
         for i in 0..N+1 {
             shield_ids_serialized[i] = serialized[i + offset];
         }
-        res.shield_ids = Vec::deserialize(shield_ids_serialized);
+        res.shield_ids = BoundedVec::deserialize(shield_ids_serialized);
         offset += N+1;
 
         let mut attestations_serialized = [0; N+1];
         for i in 0..N+1 {
             attestations_serialized[i] = serialized[i + offset];
         }
-        res.attestations = Vec::deserialize(attestations_serialized);
+        res.attestations = BoundedVec::deserialize(attestations_serialized);
         offset += N+1;
 
         res.max_block_number = serialized[offset];

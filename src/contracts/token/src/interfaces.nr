@@ -1,1 +1,1 @@
-mod Attestor_interface;
+mod Attestor;

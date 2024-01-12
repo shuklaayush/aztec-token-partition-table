@@ -22,6 +22,7 @@ use dep::aztec::oracle::{
     get_secret_key::get_secret_key,
     get_public_key::get_public_key,
 };
+use dep::protocol_types::address::AztecAddress;
 // use dep::aztec::oracle::debug_log::debug_log;
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
@@ -82,7 +83,7 @@ impl BalanceSet {
         for i in 0..maybe_notes.len() {
             if maybe_notes[i].is_some() {
                 let attestations = maybe_notes[i].unwrap_unchecked().partition_table.attestations;
-                res = attestations.contains(attestor.address);
+                res = attestations.contains(attestor.to_field());
             }
         }
         res
@@ -96,7 +97,7 @@ impl BalanceSet {
         for i in 0..maybe_notes.len() {
             if maybe_notes[i].is_some() {
                 let attestations = maybe_notes[i].unwrap_unchecked().partition_table.attestations;
-                if !attestations.contains(attestor.address) {
+                if !attestations.contains(attestor.to_field()) {
                     selected = maybe_notes[i];
                 }
             }
@@ -121,7 +122,7 @@ impl BalanceSet {
         // TODO: clone
         let shield_ids = note.partition_table.shield_ids;
         let mut attestations = note.partition_table.attestations;
-        let attestations = attestations.push(attestor.address);
+        let attestations = attestations.push(attestor.to_field());
         let partition_table = PartitionTable::new(shield_ids, attestations);
 
         let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
@@ -194,7 +195,7 @@ pub fn filter_notes_unattested(
     for i in 0..notes.len() {
         if notes[i].is_some() {
             let attestations = notes[i].unwrap_unchecked().partition_table.attestations;
-            if !attestations.contains(attestor.address) {
+            if !attestations.contains(attestor.to_field()) {
                 selected[i] = notes[i];
             }
         }

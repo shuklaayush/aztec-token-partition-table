@@ -30,8 +30,6 @@ contract Token {
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
             address_serialization::{AddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
         },
-        types::address::{AztecAddress},
-        selector::compute_selector,
     };
     use dep::protocol_types::{
         abis::function_selector::FunctionSelector,
@@ -47,7 +45,7 @@ contract Token {
     };
     // docs:end:import_authwit
 
-    use crate::interfaces::Attestor_interface::AttestorPrivateContextInterface as Attestor;
+    use crate::interfaces::Attestor::AttestorPrivateContextInterface as Attestor;
     use crate::types::{
         transparent_note::{TransparentNote, TransparentNoteMethods, TRANSPARENT_NOTE_LEN},
         token_note::{TokenNote, TokenNoteMethods, TOKEN_NOTE_LEN},
@@ -267,7 +265,7 @@ contract Token {
 
         storage.balances.at(to).add(SafeU120::new(amount));
 
-        let selector = compute_selector("_increment_num_shields()");
+        let selector = FunctionSelector::from_signature("_increment_num_shields()");
         let _void = context.call_public_function(context.this_address(), selector, []);
     }
     // docs:end:redeem_shield
@@ -326,7 +324,7 @@ contract Token {
     // TODO: Recursively call `request_attestation` until all attestations are received?
     #[aztec(private)]
     fn request_attestation(note: TokenNote, attestor: AztecAddress) {
-        // let from = AztecAddress::new(context.msg_sender());
+        // let from = AztecAddress::from_field(context.msg_sender());
         // let shield_ids = note.partition_table.shield_ids;
         // TODO: Use slow updates tree
         // let _void = Attestor::at(attestor.address).assert_attestation(&mut context, shield_ids.elems);
@@ -335,7 +333,7 @@ contract Token {
 
     // #[aztec(private)]
     // fn has_attestation(attestor: AztecAddress) -> bool {
-    //     let from = AztecAddress::new(context.msg_sender());
+    //     let from = AztecAddress::from_field(context.msg_sender());
 
     //     let note = storage.balances.at(from).last_unattested_note(attestor);
     //     note.is_none()
@@ -407,15 +405,15 @@ contract Token {
     }
     // docs:end:balance_of_public
 
-    unconstrained fn num_shields() -> Field {
+    unconstrained fn num_shields() -> pub Field {
         storage.num_shields.read()
     }
 
-    unconstrained fn has_attestation(owner: AztecAddress, attestor: AztecAddress) -> bool {
+    unconstrained fn has_attestation(owner: AztecAddress, attestor: AztecAddress) -> pub bool {
         storage.balances.at(owner).has_attestation(attestor)
     }
 
-    unconstrained fn last_unattested_note(owner: AztecAddress, attestor: AztecAddress) -> Option<TokenNote> {
+    unconstrained fn last_unattested_note(owner: AztecAddress, attestor: AztecAddress) -> pub Option<TokenNote> {
         storage.balances.at(owner).last_unattested_note_unc(attestor)
     }
 
