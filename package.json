@@ -35,10 +35,10 @@
     "rootDir": "./src"
   },
   "dependencies": {
-    "@aztec/aztec.js": "0.16.9",
-    "@aztec/circuits.js": "0.16.9",
-    "@aztec/foundation": "0.16.9",
-    "@aztec/types": "0.16.9"
+    "@aztec/aztec.js": "0.17.0",
+    "@aztec/circuits.js": "0.17.0",
+    "@aztec/foundation": "0.17.0",
+    "@aztec/types": "0.17.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",

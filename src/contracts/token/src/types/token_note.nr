@@ -1,22 +1,25 @@
-use dep::protocol_types::constants::MAX_READ_REQUESTS_PER_CALL;
+use dep::protocol_types::{
+    address::AztecAddress,
+    constants::{
+        MAX_READ_REQUESTS_PER_CALL
+    },
+};
 use dep::aztec::{
     note::{
         note_header::NoteHeader,
         note_interface::NoteInterface,
         utils::compute_note_hash_for_read_or_nullify,
     },
-    hash::pedersen_hash,
     context::PrivateContext,
     state_vars::set::Set,
     log::emit_encrypted_log,
+    hash::pedersen_hash,
 };
-use dep::aztec::types::address::AztecAddress;
 use dep::aztec::oracle::{
     rand::rand,
     get_secret_key::get_secret_key,
     get_public_key::get_public_key,
 };
-
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
 
@@ -55,7 +58,7 @@ impl TokenNote {
     pub fn serialize(self) -> [Field; TOKEN_NOTE_LEN] {
         let mut serialized_note = [0; TOKEN_NOTE_LEN];
         serialized_note[0] = self.amount.value as Field;
-        serialized_note[1] = self.owner.address;
+        serialized_note[1] = self.owner.to_field();
         serialized_note[2] = self.randomness;
 
         let partition_table_serialized = self.partition_table.serialize();
@@ -73,7 +76,7 @@ impl TokenNote {
         }
         Self {
             amount: SafeU120::new(serialized_note[0]),
-            owner: AztecAddress::new(serialized_note[1]),
+            owner: AztecAddress::from_field(serialized_note[1]),
             randomness: serialized_note[2],
             partition_table: PartitionTable::deserialize(partition_table_serialized),
             header: NoteHeader::empty(),
@@ -89,7 +92,7 @@ impl TokenNote {
     // docs:start:nullifier
     pub fn compute_nullifier(self) -> Field {
         let note_hash_for_nullify = compute_note_hash_for_read_or_nullify(TokenNoteMethods, self);
-        let secret = get_secret_key(self.owner.address);
+        let secret = get_secret_key(self.owner);
         // TODO(#1205) Should use a non-zero generator index.
         pedersen_hash([
             note_hash_for_nullify,
@@ -107,7 +110,7 @@ impl TokenNote {
     pub fn broadcast(self, context: &mut PrivateContext, slot: Field) {
       // We only bother inserting the note if non-empty to save funds on gas.
       if !self.amount.is_zero() {
-          let encryption_pub_key = get_public_key(self.owner.address);
+          let encryption_pub_key = get_public_key(self.owner);
           emit_encrypted_log(
               context,
               (*context).this_address(),
