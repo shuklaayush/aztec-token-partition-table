@@ -1,14 +1,10 @@
-import { AttestorContract } from "../artifacts/Attestor.js";
-import { AztecAddress, DebugLogger } from "@aztec/aztec.js";
+import { AttestorContract } from '../artifacts/Attestor.js';
+import { AztecAddress, DebugLogger } from '@aztec/aztec.js';
 
 export class AttestorSimulator {
   private blacklist: Map<AztecAddress, bigint[]> = new Map();
 
-  constructor(
-    protected attestor: AttestorContract,
-    protected logger: DebugLogger,
-    protected tokens: AztecAddress[],
-  ) {}
+  constructor(protected attestor: AttestorContract, protected logger: DebugLogger, protected tokens: AztecAddress[]) {}
 
   public addToBlacklist(token: AztecAddress, shieldId: bigint) {
     let blacklist = this.blacklist.get(token) || [];
@@ -29,9 +25,7 @@ export class AttestorSimulator {
     for (const token of this.tokens) {
       let blacklist = this.blacklist.get(token) || [];
       for (const shieldId of blacklist) {
-        expect(
-          await this.attestor.methods.is_blacklisted({ address: token }, shieldId ).view()
-        ).toEqual(true);
+        expect(await this.attestor.methods.is_blacklisted({ address: token }, shieldId).view()).toEqual(true);
       }
     }
   }

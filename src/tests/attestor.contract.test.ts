@@ -1,21 +1,22 @@
-import { AttestorContract } from "../artifacts/Attestor.js";
-import { AttestorSimulator } from "./attestor_simulator.js";
+import { AttestorContract } from '../artifacts/Attestor.js';
+import { AttestorSimulator } from './attestor_simulator.js';
 import {
   AccountWallet,
+  CompleteAddress,
+  DebugLogger,
   PXE,
   TxStatus,
+  createDebugLogger,
   createPXEClient,
-  getSandboxAccountsWallets,
   waitForSandbox,
-} from "@aztec/aztec.js";
-import { CompleteAddress } from "@aztec/circuits.js";
-import { DebugLogger, createDebugLogger } from "@aztec/foundation/log";
-import { beforeAll, expect, jest } from "@jest/globals";
+} from '@aztec/aztec.js';
+import { getSandboxAccountsWallets } from '@aztec/accounts/testing';
+import { beforeAll, expect, jest } from '@jest/globals';
 
 // assumes sandbox is running locally, which this script does not trigger
 // as well as anvil.  anvil can be started with yarn test:integration
 const setupSandbox = async () => {
-  const { PXE_URL = "http://localhost:8080" } = process.env;
+  const { PXE_URL = 'http://localhost:8080' } = process.env;
   const pxe = createPXEClient(PXE_URL);
   await waitForSandbox(pxe);
   return pxe;
@@ -23,7 +24,7 @@ const setupSandbox = async () => {
 
 const TIMEOUT = 60_000;
 
-describe("e2e_attestor_contract", () => {
+describe('e2e_attestor_contract', () => {
   jest.setTimeout(TIMEOUT);
 
   let wallets: AccountWallet[];
@@ -36,28 +37,24 @@ describe("e2e_attestor_contract", () => {
   let pxe: PXE;
 
   beforeAll(async () => {
-    logger = createDebugLogger("box:attestor_contract_test");
+    logger = createDebugLogger('box:attestor_contract_test');
     pxe = await setupSandbox();
     // wallets = await createAccounts(pxe, 3);
     accounts = await pxe.getRegisteredAccounts();
     wallets = await getSandboxAccountsWallets(pxe);
 
-    logger(`Accounts: ${accounts.map((a) => a.toReadableString())}`);
-    logger(`Wallets: ${wallets.map((w) => w.getAddress().toString())}`);
+    logger(`Accounts: ${accounts.map(a => a.toReadableString())}`);
+    logger(`Wallets: ${wallets.map(w => w.getAddress().toString())}`);
 
-    attestor = await AttestorContract.deploy(wallets[0], accounts[0].address)
-      .send()
-      .deployed();
+    attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
     logger(`Attestor deployed to ${attestor.address}`);
     attestorSim = new AttestorSimulator(
       attestor,
       logger,
-      accounts.map((a) => a.address),
+      accounts.map(a => a.address),
     );
 
-    expect(await attestor.methods.admin().view()).toBe(
-      accounts[0].address.toBigInt()
-    );
+    expect(await attestor.methods.admin().view()).toBe(accounts[0].address.toBigInt());
   }, 100_000);
 
   // afterEach(async () => {
@@ -83,49 +80,38 @@ describe("e2e_attestor_contract", () => {
   //   });
   // });
 
-  describe("Blacklisting", () => {
-    it("single", async () => {
+  describe('Blacklisting', () => {
+    it('single', async () => {
       const shieldId = 69n;
-      const tx = attestor.methods
-        .add_to_blacklist(accounts[0].address, shieldId)
-        .send();
+      const tx = attestor.methods.add_to_blacklist(accounts[0].address, shieldId).send();
       const receipt = await tx.wait();
       expect(receipt.status).toBe(TxStatus.MINED);
 
-      expect(
-        await attestor.methods.is_blacklisted(accounts[0].address, shieldId).view()
-      ).toEqual(true);
+      expect(await attestor.methods.is_blacklisted(accounts[0].address, shieldId).view()).toEqual(true);
     });
 
-    it("multiple", async () => {
+    it('multiple', async () => {
       const shieldIds = [1n, 69n, 420n];
 
       for (const shieldId of shieldIds) {
-        const tx = attestor.methods
-          .add_to_blacklist(accounts[0].address, shieldId)
-          .send();
+        const tx = attestor.methods.add_to_blacklist(accounts[0].address, shieldId).send();
         const receipt = await tx.wait();
         expect(receipt.status).toBe(TxStatus.MINED);
 
-        expect(
-          await attestor.methods.is_blacklisted(accounts[0].address, shieldId).view()
-        ).toEqual(true);
+        expect(await attestor.methods.is_blacklisted(accounts[0].address, shieldId).view()).toEqual(true);
       }
     });
 
-    describe("failure cases", () => {
-      it("as non-admin", async () => {
-      const shieldId = 69n;
+    describe('failure cases', () => {
+      it('as non-admin', async () => {
+        const shieldId = 69n;
         await expect(
-          attestor
-            .withWallet(wallets[1])
-            .methods.add_to_blacklist(accounts[0].address, shieldId)
-            .simulate()
-        ).rejects.toThrowError("caller is not admin");
+          attestor.withWallet(wallets[1]).methods.add_to_blacklist(accounts[0].address, shieldId).simulate(),
+        ).rejects.toThrowError('caller is not admin');
       });
     });
   });
-  
+
   // describe("Requesting attestation", () => {
   //   const shieldIds = [1n, 69n, 420n];
 
@@ -150,4 +136,3 @@ describe("e2e_attestor_contract", () => {
   //   });
   // });
 });
-
