@@ -1,3 +1,5 @@
+use dep::std::default::Default;
+
 use crate::bounded_vec::{BoundedVec, N};
 
 global PARTITION_TABLE_LEN: Field = 24;
@@ -17,20 +19,22 @@ struct PartitionTable {
     is_table_cleared: bool,
 }
 
+impl Default for PartitionTable {
+    pub fn default() -> Self {
+        Self {
+            shield_ids: BoundedVec::default(),
+            attestations: BoundedVec::default(),
+            max_block_number: 0,
+            is_table_cleared: false,
+        }
+    }
+}
+
 impl PartitionTable {
     pub fn new(shield_ids: BoundedVec, attestations: BoundedVec) -> Self {
         Self {
             shield_ids,
             attestations,
-            max_block_number: 0,
-            is_table_cleared: false,
-        }
-    }
-
-    pub fn empty() -> Self {
-        Self {
-            shield_ids: BoundedVec::empty(),
-            attestations: BoundedVec::empty(),
             max_block_number: 0,
             is_table_cleared: false,
         }
@@ -61,7 +65,7 @@ impl PartitionTable {
     }
 
     pub fn deserialize(serialized: [Field; PARTITION_TABLE_LEN]) -> Self {
-        let mut res = PartitionTable::empty();
+        let mut res = PartitionTable::default();
         let mut offset = 0;
 
         let mut shield_ids_serialized = [0; N+1];

@@ -1,3 +1,5 @@
+use dep::std::default::Default;
+
 global N: Field = 10;
 
 struct BoundedVec {
@@ -5,26 +7,25 @@ struct BoundedVec {
     elems: [Field; N],
 }
 
-impl BoundedVec {
-    pub fn empty() -> Self {
+impl Default for BoundedVec {
+    pub fn default() -> Self {
         Self {
             len: 0,
             elems: [0; N]
         }
     }
-    
+}
+
+impl BoundedVec {
     pub fn len(self) -> Field {
         self.len
     }
 
-    pub fn push(mut self, item: Field) -> Self {
+    pub fn push(&mut self, item: Field) {
         // assert(self.len < N, "overflow");
 
         self.elems[self.len] = item;
         self.len += 1;
-
-        // BUG: Mutating inplace doesn't work
-        self
     }
 
     pub fn contains(self, elem: Field) -> bool {
@@ -48,7 +49,7 @@ impl BoundedVec {
     }
 
     pub fn deserialize(serialized: [Field; N+1]) -> Self {
-        let mut res = BoundedVec::empty();
+        let mut res = BoundedVec::default();
         res.len = serialized[0];
         for i in 0..N {
             res.elems[i] = serialized[i + 1];

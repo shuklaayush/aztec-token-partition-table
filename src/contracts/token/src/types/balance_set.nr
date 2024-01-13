@@ -120,7 +120,7 @@ impl BalanceSet {
     pub fn add_attestation(self: Self, note: TokenNote, attestor: AztecAddress) {
         let shield_ids = note.partition_table.shield_ids;
         let mut attestations = note.partition_table.attestations;
-        let attestations = attestations.push(attestor.to_field());
+        attestations.push(attestor.to_field());
         let partition_table = PartitionTable::new(shield_ids, attestations);
 
         let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
@@ -130,7 +130,7 @@ impl BalanceSet {
     }
 
     pub fn add(self: Self, addend: SafeU120) {
-        let mut addend_note = TokenNote::new(addend, self.owner, PartitionTable::empty());
+        let mut addend_note = TokenNote::new(addend, self.owner, PartitionTable::default());
 
         // docs:start:insert
         self.set.insert(&mut addend_note, true);

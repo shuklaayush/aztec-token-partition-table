@@ -7,8 +7,6 @@
 //
 //       The request_attestation method requires a set-non-intersection check that is of independent interest and should be implemented as a 3rd party library.
 
-mod types;
-
 contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
     // IMPORTS
@@ -30,9 +28,7 @@ contract Attestor {
         abis::function_selector::FunctionSelector,
         address::AztecAddress,
     };
-    use dep::common_types::partition_table::PartitionTable;
-
-    use crate::types::{blacklist::Blacklist, type_serialization::blacklist_serialization::{BLACKLIST_SERIALIZED_LEN, BlacklistSerializationMethods}};
+    use dep::common_types::{partition_table::PartitionTable, bounded_vec::{BoundedVec, N}, type_serialization::bounded_vec_serialization::BoundedVecSerializationMethods};
 
     ////////////////////////////////////////////////////////////////////////////////
     // CONSTANTS
@@ -46,7 +42,7 @@ contract Attestor {
 
     struct Storage {
         admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
-        blacklists: Map<PublicState<Blacklist, BLACKLIST_SERIALIZED_LEN>>,
+        blacklists: Map<PublicState<BoundedVec, N+1>>,
     }
 
     impl Storage {
@@ -65,7 +61,7 @@ contract Attestor {
                         PublicState::new(
                             context,
                             slot,
-                            BlacklistSerializationMethods,
+                            BoundedVecSerializationMethods,
                         )
                     },
                 ),
@@ -94,7 +90,7 @@ contract Attestor {
         // assert(shield_id > 0, "shield id must be non-zero");
 
         let mut blacklist = storage.blacklists.at(token.to_field()).read();
-        let blacklist = blacklist.add(shield_id);
+        blacklist.push(shield_id);
         storage.blacklists.at(token.to_field()).write(blacklist);
     }
 
