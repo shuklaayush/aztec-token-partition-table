@@ -119,12 +119,8 @@ impl BalanceSet {
     }
 
     // TODO: Upstream?
-    fn read_note(self, note: TokenNote) {
-        let mut context = *self.set.context.private.unwrap();
-        check_note_header(context, self.set.storage_slot, self.set.note_interface, note);
-        let note_hash_for_read_request = compute_note_hash_for_read_or_nullify(self.set.note_interface, note);
-        context.push_read_request(note_hash_for_read_request);
-    }
+    // fn read_note(self, note: TokenNote) {
+    // }
 
     pub fn add_attestation(self: Self, mut note: TokenNote, nonce: Field, attestor: AztecAddress) {
         // TODO: clone
@@ -135,23 +131,20 @@ impl BalanceSet {
 
         let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
 
-        let context = *self.set.context.private.unwrap();
+        let context = self.set.context.private.unwrap();
         let header = NoteHeader { contract_address: context.this_address(), storage_slot: self.set.storage_slot, nonce, is_transient: false };
         note.set_header(header);
 
-        let temp_note = self.last_unattested_note(attestor);
-        debug_log("--------------------------------------------------------------------------------");
-        debug_log_field(temp_note.unwrap_unchecked().header.contract_address.to_field());
-        debug_log_field(temp_note.unwrap_unchecked().header.nonce);
-        debug_log_field(temp_note.unwrap_unchecked().header.storage_slot);
-        debug_log_field(temp_note.unwrap_unchecked().header.is_transient as Field);
         debug_log("--------------------------------------------------------------------------------");
         debug_log_field(note.header.contract_address.to_field());
         debug_log_field(note.header.nonce);
         debug_log_field(note.header.storage_slot);
         debug_log_field(note.header.is_transient as Field);
 
-        self.read_note(note);   
+        check_note_header(*context, self.set.storage_slot, self.set.note_interface, note);
+        let note_hash_for_read_request = compute_note_hash_for_read_or_nullify(self.set.note_interface, note);
+        context.push_read_request(note_hash_for_read_request);
+
         self.set.remove(note);
         self.set.insert(&mut new_note, true);
     }
