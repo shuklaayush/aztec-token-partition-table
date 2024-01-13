@@ -1,7 +1,4 @@
-use dep::protocol_types::address::AztecAddress;
-use dep::safe_math::SafeU120;
-
-use crate::types::bounded_vec::{BoundedVec, N};
+use crate::bounded_vec::{BoundedVec, N};
 
 global PARTITION_TABLE_LEN: Field = 24;
 
@@ -89,3 +86,4 @@ impl PartitionTable {
         res
     }
 }
+

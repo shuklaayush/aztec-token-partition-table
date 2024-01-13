@@ -23,9 +23,9 @@ use dep::aztec::oracle::{
     get_public_key::get_public_key,
 };
 use dep::protocol_types::address::AztecAddress;
+use dep::common_types::partition_table::PartitionTable;
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
-use crate::types::partition_table::PartitionTable;
 
 // A set implementing standard manipulation of balances.
 // Does not require spending key, but only knowledge.

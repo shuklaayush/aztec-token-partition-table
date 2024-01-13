@@ -22,9 +22,8 @@ use dep::aztec::oracle::{
 };
 use dep::safe_math::SafeU120;
 use dep::std::option::Option;
-
-use crate::types::partition_table::{PartitionTable, PARTITION_TABLE_LEN};
-use crate::types::bounded_vec::BoundedVec;
+use dep::common_types::bounded_vec::BoundedVec;
+use dep::common_types::partition_table::{PartitionTable, PARTITION_TABLE_LEN};
 
 global TOKEN_NOTE_LEN: Field = 28; // 3 + 24 (PT) plus a header.
 
