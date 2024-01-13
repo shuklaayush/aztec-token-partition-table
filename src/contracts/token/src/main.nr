@@ -335,7 +335,7 @@ contract Token {
             let note = maybe_note.unwrap_unchecked();
 
             // TODO: Use slow updates tree and has_attestation
-            let _void = Attestor::at(attestor).assert_attestation(&mut context, note.partition_table.shield_ids.elems);
+            let _void = Attestor::at(attestor).assert_attestation(&mut context, note.partition_table);
 
             storage.balances.at(from).add_attestation(note, attestor);
         }

@@ -30,6 +30,7 @@ contract Attestor {
         abis::function_selector::FunctionSelector,
         address::AztecAddress,
     };
+    use dep::common_types::partition_table::PartitionTable;
 
     use crate::types::{blacklist::Blacklist, type_serialization::blacklist_serialization::{BLACKLIST_SERIALIZED_LEN, BlacklistSerializationMethods}};
 
@@ -103,12 +104,13 @@ contract Attestor {
     }
 
     #[aztec(public)]
-    fn request_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) -> bool {
+    fn request_attestation(partition_table: PartitionTable) -> bool {
         let token = context.msg_sender();
 
+        let shield_ids = partition_table.shield_ids.elems;
         let mut res = true;
-        for i in 0..partition_table.len() {
-            if storage.blacklists.at(token.to_field()).read().contains(partition_table[i]) {
+        for i in 0..shield_ids.len() {
+            if storage.blacklists.at(token.to_field()).read().contains(shield_ids[i]) {
                 res = false;
             }
         }
@@ -116,11 +118,12 @@ contract Attestor {
     }
 
     #[aztec(public)]
-    fn assert_attestation(partition_table: [Field; MAX_SHIELD_IDS_LEN]) {
+    fn assert_attestation(partition_table: PartitionTable) {
         let token = context.msg_sender();
 
-        for i in 0..partition_table.len() {
-            if storage.blacklists.at(token.to_field()).read().contains(partition_table[i]) {
+        let shield_ids = partition_table.shield_ids.elems;
+        for i in 0..shield_ids.len() {
+            if storage.blacklists.at(token.to_field()).read().contains(shield_ids[i]) {
                 assert(false, "intersects");
             }
         }
