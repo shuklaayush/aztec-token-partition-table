@@ -7,12 +7,14 @@
   "scripts": {
     "build": "yarn clean && yarn compile && yarn codegen && tsc -b && webpack",
     "clean": "rm -rf ./dest .tsbuildinfo ./src/artifacts ./src/contracts/target",
-    "formatting": "prettier --check ./src && eslint ./src",
-    "formatting:fix": "prettier -w ./src",
+    "format": "prettier --check ./src && eslint ./src",
+    "format:fix": "prettier -w ./src",
+    "format:contracts": "cd src/contracts && aztec-nargo fmt",
     "compile": "yarn compile:attestor && yarn compile:token",
     "compile:attestor": "cd src/contracts/attestor && aztec-nargo compile",
     "compile:token": "cd src/contracts/token && aztec-nargo compile",
-    "codegen": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/target && aztec-cli codegen --outdir src/contracts/token/src/interfaces --nr src/contracts/target",
+    "codegen": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/target",
+    "codegen:interfaces": "aztec-cli codegen --outdir src/contracts/token/src/interfaces --nr src/contracts/target",
     "test": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --runInBand"
   },
   "jest": {

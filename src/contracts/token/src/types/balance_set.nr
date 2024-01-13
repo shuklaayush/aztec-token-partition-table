@@ -4,7 +4,7 @@ use dep::protocol_types::{
     constants::MAX_READ_REQUESTS_PER_CALL,
 };
 use dep::aztec::{
-  context::{Context, PrivateContext},
+  context::Context,
   state_vars::set::Set,
 };
 use dep::aztec::note::{
@@ -23,7 +23,6 @@ use dep::aztec::oracle::{
     get_public_key::get_public_key,
 };
 use dep::protocol_types::address::AztecAddress;
-use dep::aztec::oracle::debug_log::{debug_log, debug_log_field};
 
 use crate::types::token_note::{TokenNote, TOKEN_NOTE_LEN, TokenNoteMethods};
 use crate::types::partition_table::PartitionTable;
@@ -118,32 +117,13 @@ impl BalanceSet {
         selected
     }
 
-    // TODO: Upstream?
-    // fn read_note(self, note: TokenNote) {
-    // }
-
-    pub fn add_attestation(self: Self, mut note: TokenNote, nonce: Field, attestor: AztecAddress) {
-        // TODO: clone
+    pub fn add_attestation(self: Self, note: TokenNote, attestor: AztecAddress) {
         let shield_ids = note.partition_table.shield_ids;
         let mut attestations = note.partition_table.attestations;
         let attestations = attestations.push(attestor.to_field());
         let partition_table = PartitionTable::new(shield_ids, attestations);
 
         let mut new_note = TokenNote::new(note.amount, self.owner, partition_table);
-
-        let context = self.set.context.private.unwrap();
-        let header = NoteHeader { contract_address: context.this_address(), storage_slot: self.set.storage_slot, nonce, is_transient: false };
-        note.set_header(header);
-
-        debug_log("--------------------------------------------------------------------------------");
-        debug_log_field(note.header.contract_address.to_field());
-        debug_log_field(note.header.nonce);
-        debug_log_field(note.header.storage_slot);
-        debug_log_field(note.header.is_transient as Field);
-
-        check_note_header(*context, self.set.storage_slot, self.set.note_interface, note);
-        let note_hash_for_read_request = compute_note_hash_for_read_or_nullify(self.set.note_interface, note);
-        context.push_read_request(note_hash_for_read_request);
 
         self.set.remove(note);
         self.set.insert(&mut new_note, true);
@@ -230,18 +210,4 @@ pub fn contains<N>(arr: [AztecAddress; N], addr: AztecAddress) -> bool {
         }
     }
     res
-}
-
-// TODO: Make pub in upstream https://github.com/AztecProtocol/aztec-packages/blob/034bc300fa4688958776afbc83276bacca7ce6ad/yarn-project/aztec-nr/aztec/src/note/note_getter.nr
-fn check_note_header<Note, N>(
-    context: PrivateContext,
-    storage_slot: Field,
-    note_interface: NoteInterface<Note, N>,
-    note: Note
-) {
-    let get_header = note_interface.get_header;
-    let header = get_header(note);
-    let contract_address = context.this_address();
-    assert(header.contract_address == contract_address);
-    assert(header.storage_slot == storage_slot);
 }

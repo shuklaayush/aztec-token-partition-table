@@ -12,6 +12,10 @@ impl BoundedVec {
             elems: [0; N]
         }
     }
+    
+    pub fn len(self) -> Field {
+        self.len
+    }
 
     pub fn push(mut self, item: Field) -> Self {
         // assert(self.len < N, "overflow");
