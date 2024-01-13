@@ -323,17 +323,19 @@ contract Token {
 
     // TODO: Recursively call `request_attestation` until all attestations are received?
     #[aztec(private)]
-    fn request_attestation(note: TokenNote, attestor: AztecAddress) {
-        // let from = AztecAddress::from_field(context.msg_sender());
-        // let shield_ids = note.partition_table.shield_ids;
+    fn request_attestation(serialized_note: [Field; TOKEN_NOTE_LEN], nonce: Field, attestor: AztecAddress) {
+        let from = context.msg_sender();
+
+        let mut note = TokenNote::deserialize(serialized_note);
+        let shield_ids = note.partition_table.shield_ids;
         // TODO: Use slow updates tree
-        // let _void = Attestor::at(attestor.address).assert_attestation(&mut context, shield_ids.elems);
-        // storage.balances.at(from).add_attestation(note, attestor);
+        let _void = Attestor::at(attestor).assert_attestation(&mut context, shield_ids.elems);
+        storage.balances.at(from).add_attestation(note, nonce, attestor);
     }
 
     // #[aztec(private)]
     // fn has_attestation(attestor: AztecAddress) -> bool {
-    //     let from = AztecAddress::from_field(context.msg_sender());
+    //     let from = context.msg_sender();
 
     //     let note = storage.balances.at(from).last_unattested_note(attestor);
     //     note.is_none()
@@ -417,6 +419,16 @@ contract Token {
         storage.balances.at(owner).last_unattested_note_unc(attestor)
     }
 
+    unconstrained fn last_unattested_note_serialized(owner: AztecAddress, attestor: AztecAddress) -> pub Option<[Field; TOKEN_NOTE_LEN]> {
+        let maybe_note = storage.balances.at(owner).last_unattested_note_unc(attestor);
+        let mut res = Option::none();
+        if (maybe_note.is_some()) {
+            let note = maybe_note.unwrap_unchecked();
+            res = Option::some(note.serialize());
+        }
+        res
+    }
+    
     // Below this point is the stuff of nightmares.
     // This should ideally not be required. What do we do if vastly different types of serialized_notes?
 

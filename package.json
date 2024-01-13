@@ -10,11 +10,9 @@
     "formatting": "prettier --check ./src && eslint ./src",
     "formatting:fix": "prettier -w ./src",
     "compile": "yarn compile:attestor && yarn compile:token",
-    "codegen": "yarn codegen:attestor && yarn codegen:token",
     "compile:attestor": "cd src/contracts/attestor && aztec-nargo compile",
     "compile:token": "cd src/contracts/token && aztec-nargo compile",
-    "codegen:attestor": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/attestor/target && aztec-cli codegen --outdir src/contracts/token/src/interfaces --nr src/contracts/attestor/target",
-    "codegen:token": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/token/target",
+    "codegen": "aztec-cli codegen --outdir src/artifacts --ts src/contracts/target && aztec-cli codegen --outdir src/contracts/token/src/interfaces --nr src/contracts/target",
     "test": "NODE_NO_WARNINGS=1 node --experimental-vm-modules $(yarn bin jest) --runInBand"
   },
   "jest": {

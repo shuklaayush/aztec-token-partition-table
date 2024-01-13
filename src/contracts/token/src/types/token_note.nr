@@ -45,6 +45,16 @@ struct TokenNote {
 }
 
 impl TokenNote {
+    pub fn empty() -> Self {
+        Self {
+            amount: SafeU120::new(0),
+            owner: AztecAddress::empty(),
+            randomness: rand(),
+            partition_table: PartitionTable::empty(),
+            header: NoteHeader::empty(),
+        }
+    }
+
     pub fn new(amount: SafeU120, owner: AztecAddress, partition_table: PartitionTable) -> Self {
         Self {
             amount,
