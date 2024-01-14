@@ -991,11 +991,7 @@ describe('e2e_token_contract', () => {
 
       attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
       logger(`Attestor deployed to ${attestor.address}`);
-      attestorSim = new AttestorSimulator(
-        attestor,
-        logger,
-        accounts.map(a => a.address),
-      );
+      attestorSim = new AttestorSimulator();
     }, 100_000);
 
     it('Has attestation', async () => {

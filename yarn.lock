@@ -123,6 +123,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aztec/merkle-tree@npm:0.17.0":
+  version: 0.17.0
+  resolution: "@aztec/merkle-tree@npm:0.17.0"
+  dependencies:
+    "@aztec/foundation": "npm:0.17.0"
+    "@aztec/types": "npm:0.17.0"
+    levelup: "npm:^5.1.1"
+    memdown: "npm:^6.1.1"
+    sha256: "npm:^0.2.0"
+    tslib: "npm:^2.4.0"
+  checksum: 0253eaf36a4dd4daecdeba3adae2643ec93394374e0510369a04015d58dd7afda4774c8e0c21967dd544af1490b963276bc0c49d48638879d8945e11f757346a
+  languageName: node
+  linkType: hard
+
 "@aztec/types@npm:0.17.0":
   version: 0.17.0
   resolution: "@aztec/types@npm:0.17.0"
@@ -1102,6 +1116,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/abstract-leveldown@npm:*":
+  version: 7.2.5
+  resolution: "@types/abstract-leveldown@npm:7.2.5"
+  checksum: ec6c054a0a09c5a2ba8de6e640169978d34b6ef9b629183c440330208ad67e1322d7dd0aeb834963a9138b47b78730dcddd929c10138ccfddb7b06869264e173
+  languageName: node
+  linkType: hard
+
 "@types/babel__core@npm:^7.1.14":
   version: 7.20.5
   resolution: "@types/babel__core@npm:7.20.5"
@@ -1184,6 +1205,33 @@ __metadata:
     expect: "npm:^29.0.0"
     pretty-format: "npm:^29.0.0"
   checksum: 524a3394845214581278bf4d75055927261fbeac7e1a89cd621bd0636da37d265fe0a85eac58b5778758faad1cbd7c7c361dfc190c78ebde03a91cce33463261
+  languageName: node
+  linkType: hard
+
+"@types/level-errors@npm:*":
+  version: 3.0.2
+  resolution: "@types/level-errors@npm:3.0.2"
+  checksum: 5972e8e4a680252828ce34b7124f79b9b2698db68b04174119fa81251dbff185ac06fdc73f5d8bad6b10d6e4eaace53a98f96615ef64982a4fa521bddd55dddb
+  languageName: node
+  linkType: hard
+
+"@types/levelup@npm:^5":
+  version: 5.1.5
+  resolution: "@types/levelup@npm:5.1.5"
+  dependencies:
+    "@types/abstract-leveldown": "npm:*"
+    "@types/level-errors": "npm:*"
+    "@types/node": "npm:*"
+  checksum: 4a04cd5e835f206eef434ab338baa98926d62ee21408a13dab62e14c0c48168deae4b19d906b7ce4afc6295ebc4dc1386ff6e78c0009446b00bebc320322141d
+  languageName: node
+  linkType: hard
+
+"@types/memdown@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "@types/memdown@npm:3.0.5"
+  dependencies:
+    "@types/abstract-leveldown": "npm:*"
+  checksum: 08e0b10fdc6199884ade1668a208fc8920ffe9693576cb86d4cfd5cea0c13083ccdda28df886bc3515d71e83e1c1cd568e2f66d5a664e0b6851e1badf9e12002
   languageName: node
   linkType: hard
 
@@ -1431,13 +1479,18 @@ __metadata:
     "@aztec/aztec.js": "npm:0.17.0"
     "@aztec/circuits.js": "npm:0.17.0"
     "@aztec/foundation": "npm:0.17.0"
+    "@aztec/merkle-tree": "npm:0.17.0"
     "@aztec/types": "npm:0.17.0"
     "@jest/globals": "npm:^29.6.4"
     "@types/jest": "npm:^29.5.0"
+    "@types/levelup": "npm:^5"
+    "@types/memdown": "npm:^3.0.5"
     "@types/mocha": "npm:^10.0.3"
     "@types/node": "npm:^20.5.9"
     eslint: "npm:^8.21.0"
     jest: "npm:^29.6.4"
+    levelup: "npm:^5.1.1"
+    memdown: "npm:^6.1.1"
     prettier: "npm:^2.8.8"
     ts-jest: "npm:^29.1.0"
     ts-node: "npm:^10.9.1"
@@ -1941,10 +1994,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"convert-hex@npm:~0.1.0":
+  version: 0.1.0
+  resolution: "convert-hex@npm:0.1.0"
+  checksum: 80b5c3f4db67b9fcad6c7539997117c5ee41f8142bc82bddda5da0d699dbed33ab8c1e86a075867468766702330cac4c559930ae371c953e4ae46118f3578d06
+  languageName: node
+  linkType: hard
+
 "convert-source-map@npm:^2.0.0":
   version: 2.0.0
   resolution: "convert-source-map@npm:2.0.0"
   checksum: 8f2f7a27a1a011cc6cc88cc4da2d7d0cfa5ee0369508baae3d98c260bb3ac520691464e5bbe4ae7cdf09860c1d69ecc6f70c63c6e7c7f7e3f18ec08484dc7d9b
+  languageName: node
+  linkType: hard
+
+"convert-string@npm:~0.1.0":
+  version: 0.1.0
+  resolution: "convert-string@npm:0.1.0"
+  checksum: eb737865fbb216cb823e465d819452c2c5a60cc0ad9da9bd9d699ba8178c4ff6186501f75af43c420bbe25e5ccac7f27ff1011640ab77e0227f6b992bfb043bd
   languageName: node
   linkType: hard
 
@@ -4866,6 +4933,16 @@ __metadata:
   bin:
     sha.js: ./bin.js
   checksum: b7a371bca8821c9cc98a0aeff67444a03d48d745cb103f17228b96793f455f0eb0a691941b89ea1e60f6359207e36081d9be193252b0f128e0daf9cfea2815a5
+  languageName: node
+  linkType: hard
+
+"sha256@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "sha256@npm:0.2.0"
+  dependencies:
+    convert-hex: "npm:~0.1.0"
+    convert-string: "npm:~0.1.0"
+  checksum: 4ba9822cb88138b8416c1a428779e7aebeae3e317cb428d99cb254e6f841869fb8f868cf2ba965e1a7070ce5bbeccb625947caa983a0df7355cad8f014e35060
   languageName: node
   linkType: hard
 

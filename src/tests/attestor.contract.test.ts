@@ -2,6 +2,7 @@ import { AttestorContract } from '../artifacts/Attestor.js';
 import { AttestorSimulator } from './attestor_simulator.js';
 import {
   AccountWallet,
+  AztecAddress,
   CompleteAddress,
   DebugLogger,
   PXE,
@@ -35,6 +36,9 @@ describe('e2e_attestor_contract', () => {
 
   let attestorSim: AttestorSimulator;
   let pxe: PXE;
+  
+  let admin: AztecAddress;
+  let token: AztecAddress;
 
   beforeAll(async () => {
     logger = createDebugLogger('box:attestor_contract_test');
@@ -42,19 +46,18 @@ describe('e2e_attestor_contract', () => {
     // wallets = await createAccounts(pxe, 3);
     accounts = await pxe.getRegisteredAccounts();
     wallets = await getSandboxAccountsWallets(pxe);
-
+    
     logger(`Accounts: ${accounts.map(a => a.toReadableString())}`);
     logger(`Wallets: ${wallets.map(w => w.getAddress().toString())}`);
 
-    attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
-    logger(`Attestor deployed to ${attestor.address}`);
-    attestorSim = new AttestorSimulator(
-      attestor,
-      logger,
-      accounts.map(a => a.address),
-    );
+    admin = accounts[0].address;
+    token = accounts[1].address;
 
-    expect(await attestor.methods.admin().view()).toBe(accounts[0].address.toBigInt());
+    attestor = await AttestorContract.deploy(wallets[0], admin).send().deployed();
+    logger(`Attestor deployed to ${attestor.address}`);
+    attestorSim = new AttestorSimulator();
+
+    expect(await attestor.methods.admin().view()).toBe(admin.toBigInt());
   }, 100_000);
 
   // afterEach(async () => {
@@ -74,7 +77,7 @@ describe('e2e_attestor_contract', () => {
   //   describe("failure cases", () => {
   //     it("Set admin (not admin)", async () => {
   //       await expect(
-  //         attestor.methods.set_admin(accounts[0].address).simulate()
+  //         attestor.methods.set_admin(admin).simulate()
   //       ).rejects.toThrowError("Assertion failed: caller is not admin");
   //     });
   //   });
@@ -82,31 +85,45 @@ describe('e2e_attestor_contract', () => {
 
   describe('Blacklisting', () => {
     it('single', async () => {
-      const shieldId = 69n;
-      const tx = attestor.methods.add_to_blacklist(accounts[0].address, shieldId).send();
+      const shieldId = 0n;
+      // console.log(await attestorSim.getRoot(token));
+
+      expect(await attestor.methods.get_blacklist_root(token).view()).toEqual(await attestorSim.getRoot(token));
+
+      const proof = await attestorSim.getSiblingPath(token, shieldId);
+      expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof).view()).toEqual(true);
+
+      const tx = attestor.methods.add_to_blacklist(token, shieldId, proof).send();
       const receipt = await tx.wait();
       expect(receipt.status).toBe(TxStatus.MINED);
+      await attestorSim.addToBlacklist(token, shieldId);
 
-      expect(await attestor.methods.is_blacklisted(accounts[0].address, shieldId).view()).toEqual(true);
+      expect(await attestor.methods.get_blacklist_root(token).view()).toEqual(await attestorSim.getRoot(token));
+      expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof).view()).toEqual(false);
     });
 
     it('multiple', async () => {
       const shieldIds = [1n, 69n, 420n];
 
       for (const shieldId of shieldIds) {
-        const tx = attestor.methods.add_to_blacklist(accounts[0].address, shieldId).send();
+        const proof = await attestorSim.getSiblingPath(token, shieldId);
+        expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof).view()).toEqual(true);
+
+        const tx = attestor.methods.add_to_blacklist(token, shieldId, proof).send();
         const receipt = await tx.wait();
         expect(receipt.status).toBe(TxStatus.MINED);
+        await attestorSim.addToBlacklist(token, shieldId);
 
-        expect(await attestor.methods.is_blacklisted(accounts[0].address, shieldId).view()).toEqual(true);
+        expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof).view()).toEqual(false);
       }
     });
 
     describe('failure cases', () => {
       it('as non-admin', async () => {
         const shieldId = 69n;
+        const proof = await attestorSim.getSiblingPath(token, shieldId);
         await expect(
-          attestor.withWallet(wallets[1]).methods.add_to_blacklist(accounts[0].address, shieldId).simulate(),
+          attestor.withWallet(wallets[1]).methods.add_to_blacklist(token, shieldId, proof).simulate(),
         ).rejects.toThrowError('caller is not admin');
       });
     });
@@ -118,7 +135,7 @@ describe('e2e_attestor_contract', () => {
   //   beforeAll(async () => {
   //     for (const shieldId of shieldIds) {
   //       const tx = attestor.methods
-  //         .add_to_blacklist(accounts[0].address, shieldId)
+  //         .add_to_blacklist(token, shieldId)
   //         .send();
   //       const receipt = await tx.wait();
   //       expect(receipt.status).toBe(TxStatus.MINED);
@@ -129,7 +146,7 @@ describe('e2e_attestor_contract', () => {
   //     const partitionTable = [2n, 69n];
   //     const tx = attestor.methods
   //       // BUG: Doesn't work
-  //       .request_attestation(accounts[0].address, partitionTable)
+  //       .request_attestation(token, partitionTable)
   //       .send();
   //     const receipt = await tx.wait();
   //     expect(receipt.status).toBe(TxStatus.MINED);
