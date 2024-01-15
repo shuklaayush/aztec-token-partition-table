@@ -35,8 +35,8 @@ contract Attestor {
     // CONSTANTS
     ////////////////////////////////////////////////////////////////////////////////
 
-    global DEPTH: Field = 254;
-    global EMPTY_ROOT: Field = 0xccaafdc9c353743970d4e305ae73641ce694f07db67886d2769c9ed88e969d8;
+    global DEPTH: Field = 32;
+    global EMPTY_ROOT: Field = 0x16642d9ccd8346c403aa4c3fa451178b22534a27035cdaa6ec34ae53b29c50cb;
 
     ////////////////////////////////////////////////////////////////////////////////
     // STORAGE
@@ -114,37 +114,35 @@ contract Attestor {
         emit_unencrypted_log(&mut context, shield_id);
     }
 
-    #[aztec(public)]
-    fn request_attestation(partition_table: PartitionTable, proof: [Field; DEPTH]) -> bool {
+    ////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE
+    ////////////////////////////////////////////////////////////////////////////////
+
+    #[aztec(private)]
+    fn request_attestation(
+        partition_table: PartitionTable,
+        blacklist_root: Field,
+        proof: [Field; DEPTH]
+    ) -> bool {
         let token = context.msg_sender();
+
+        // TODO: Use slow updates tree
+        let selector = FunctionSelector::from_signature("_assert_blacklist_root((Field),Field)");
+        context.call_public_function(
+            context.this_address(),
+            selector,
+            [token.to_field(), blacklist_root]
+        );
 
         let shield_ids = partition_table.shield_ids.elems;
         let mut res = true;
         for i in 0..shield_ids.len() {
-            let root = storage.blacklists.at(token.to_field()).read();
-            if smt::verify(shield_ids[i], root, proof) {
+            if smt::verify(shield_ids[i], blacklist_root, proof) {
                 res = false;
             }
         }
         res
     }
-
-    #[aztec(public)]
-    fn assert_attestation(partition_table: PartitionTable, proof: [Field; DEPTH]) {
-        let token = context.msg_sender();
-
-        let shield_ids = partition_table.shield_ids.elems;
-        for i in 0..shield_ids.len() {
-            let root = storage.blacklists.at(token.to_field()).read();
-            if smt::verify(shield_ids[i], root, proof) {
-                assert(false, "intersects");
-            }
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // PRIVATE
-    ////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////
     // INTERNAL
@@ -153,6 +151,11 @@ contract Attestor {
     #[aztec(public)]
     internal fn _initialize(new_admin: AztecAddress) {
         storage.admin.write(new_admin);
+    }
+
+    #[aztec(public)]
+    internal fn _assert_blacklist_root(token: AztecAddress, root: Field) {
+        assert(root == storage.blacklists.at(token.to_field()).read(), "incorrect blacklist root");
     }
 
     ////////////////////////////////////////////////////////////////////////////////

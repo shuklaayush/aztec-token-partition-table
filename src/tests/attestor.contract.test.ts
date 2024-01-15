@@ -58,6 +58,8 @@ describe('e2e_attestor_contract', () => {
     attestorSim = new AttestorSimulator();
 
     expect(await attestor.methods.admin().view()).toBe(admin.toBigInt());
+
+    // console.log("empty root", await attestorSim.getRoot(token));
   }, 100_000);
 
   // afterEach(async () => {
@@ -86,7 +88,6 @@ describe('e2e_attestor_contract', () => {
   describe('Blacklisting', () => {
     it('single', async () => {
       const shieldId = 0n;
-      // console.log(await attestorSim.getRoot(token));
 
       expect(await attestor.methods.get_blacklist_root(token).view()).toEqual(await attestorSim.getRoot(token));
 

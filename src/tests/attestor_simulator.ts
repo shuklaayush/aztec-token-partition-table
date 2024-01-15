@@ -6,7 +6,7 @@ import { type MemDown, default as memdown } from 'memdown';
 
 const ABSENT = new Fr(0);
 const PRESENT = new Fr(1);
-const DEPTH = 254;
+const DEPTH = 32;
 
 export const createMemDown = () => (memdown as any)() as MemDown<any, any>;
 
