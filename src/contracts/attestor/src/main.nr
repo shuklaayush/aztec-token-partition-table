@@ -137,7 +137,7 @@ contract Attestor {
         let shield_ids = partition_table.shield_ids.elems;
         let mut res = true;
         for i in 0..shield_ids.len() {
-            if smt::verify(shield_ids[i], blacklist_root, proof) {
+            if !smt::verify(shield_ids[i], blacklist_root, proof) {
                 res = false;
             }
         }
@@ -154,8 +154,12 @@ contract Attestor {
     }
 
     #[aztec(public)]
-    internal fn _assert_blacklist_root(token: AztecAddress, root: Field) {
-        assert(root == storage.blacklists.at(token.to_field()).read(), "incorrect blacklist root");
+    internal fn _assert_blacklist_root(token: AztecAddress, rhs: Field) {
+        let mut lhs = storage.blacklists.at(token.to_field()).read();
+        if lhs == 0 {
+            lhs = EMPTY_ROOT;
+        }
+        assert(lhs == rhs, "incorrect blacklist root");
     }
 
     ////////////////////////////////////////////////////////////////////////////////

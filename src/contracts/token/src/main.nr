@@ -55,6 +55,9 @@ contract Token {
     };
     // docs:end::imports
 
+    // TODO: Move to a common crate
+    global DEPTH: Field = 32;
+
     // docs:start:storage_struct
     struct Storage {
         // docs:start:storage_admin
@@ -324,7 +327,13 @@ contract Token {
 
     // TODO: Recursively call `request_attestation` until all attestations are received?
     #[aztec(private)]
-    fn request_attestation(from: AztecAddress, attestor: AztecAddress, nonce: Field) {
+    fn request_attestation(
+        from: AztecAddress,
+        attestor: AztecAddress,
+        blacklist_root: Field,
+        proof: [Field; DEPTH],
+        nonce: Field
+    ) {
         if (!from.eq(context.msg_sender())) {
             assert_current_call_valid_authwit(&mut context, from);
         } else {
@@ -335,10 +344,10 @@ contract Token {
         if maybe_note.is_some() {
             let note = maybe_note.unwrap_unchecked();
 
-            // TODO: Use slow updates tree and has_attestation
-            let _void = Attestor::at(attestor).assert_attestation(&mut context, note.partition_table);
-
-            storage.balances.at(from).add_attestation(note, attestor);
+            let attested = Attestor::at(attestor).request_attestation(&mut context, note.partition_table, blacklist_root, proof)[0] as bool;
+            if attested {
+                storage.balances.at(from).add_attestation(note, attestor);
+            }
         }
     }
 

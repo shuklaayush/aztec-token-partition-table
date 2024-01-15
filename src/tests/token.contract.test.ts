@@ -999,7 +999,12 @@ describe('e2e_token_contract', () => {
     });
 
     it('Request attestation', async () => {
-      const txClaim = asset.methods.request_attestation(accounts[0].address, attestor.address, 0).send();
+      let shieldId = 0n;
+
+      let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
+      const proof = await attestorSim.getSiblingPath(accounts[0].address, shieldId);
+
+      const txClaim = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proof, 0).send();
       const receiptClaim = await txClaim.wait();
       expect(receiptClaim.status).toBe(TxStatus.MINED);
 
