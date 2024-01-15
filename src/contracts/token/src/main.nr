@@ -26,6 +26,7 @@ contract Token {
         hash::{compute_secret_hash},
         state_vars::{map::Map, public_state::PublicState, set::Set},
         types::type_serialization::{
+            u32_serialization::{U32SerializationMethods, U32_SERIALIZED_LEN},
             field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
             bool_serialization::{BoolSerializationMethods, BOOL_SERIALIZED_LEN},
             address_serialization::{AddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
@@ -71,7 +72,7 @@ contract Token {
         // docs:end:storage_pending_shields
         public_balances: Map<PublicState<SafeU120, SAFE_U120_SERIALIZED_LEN>>,
         // total number of shielded notes
-        num_shields: PublicState<Field, FIELD_SERIALIZED_LEN>,
+        num_shields: PublicState<u32, U32_SERIALIZED_LEN>,
     }
     // docs:end:storage_struct
 
@@ -124,7 +125,7 @@ contract Token {
                 num_shields: PublicState::new(
                     context,
                     7,
-                    FieldSerializationMethods,
+                    U32SerializationMethods,
                 ),
             }
         }
@@ -415,7 +416,7 @@ contract Token {
     }
     // docs:end:balance_of_public
 
-    unconstrained fn num_shields() -> pub Field {
+    unconstrained fn num_shields() -> pub u32 {
         storage.num_shields.read()
     }
 
