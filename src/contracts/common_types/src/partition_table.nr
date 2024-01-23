@@ -20,7 +20,7 @@ struct PartitionTable {
 }
 
 impl Default for PartitionTable {
-    pub fn default() -> Self {
+    fn default() -> Self {
         Self {
             shield_ids: BoundedVec::default(),
             attestations: BoundedVec::default(),

@@ -8,7 +8,7 @@ struct BoundedVec {
 }
 
 impl Default for BoundedVec {
-    pub fn default() -> Self {
+    fn default() -> Self {
         Self {
             len: 0,
             elems: [0; N]

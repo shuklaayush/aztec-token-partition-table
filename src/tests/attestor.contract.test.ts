@@ -8,20 +8,11 @@ import {
   PXE,
   TxStatus,
   createDebugLogger,
-  createPXEClient,
-  waitForSandbox,
 } from '@aztec/aztec.js';
-import { getSandboxAccountsWallets } from '@aztec/accounts/testing';
+import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
 import { beforeAll, expect, jest } from '@jest/globals';
 
-// assumes sandbox is running locally, which this script does not trigger
-// as well as anvil.  anvil can be started with yarn test:integration
-const setupSandbox = async () => {
-  const { PXE_URL = 'http://localhost:8080' } = process.env;
-  const pxe = createPXEClient(PXE_URL);
-  await waitForSandbox(pxe);
-  return pxe;
-};
+import { setupEnvironment } from '../environment/index.js';
 
 const TIMEOUT = 60_000;
 
@@ -42,10 +33,10 @@ describe('e2e_attestor_contract', () => {
 
   beforeAll(async () => {
     logger = createDebugLogger('box:attestor_contract_test');
-    pxe = await setupSandbox();
+    pxe = await setupEnvironment();
     // wallets = await createAccounts(pxe, 3);
     accounts = await pxe.getRegisteredAccounts();
-    wallets = await getSandboxAccountsWallets(pxe);
+    wallets = await getInitialTestAccountsWallets(pxe);
     
     logger(`Accounts: ${accounts.map(a => a.toReadableString())}`);
     logger(`Wallets: ${wallets.map(w => w.getAddress().toString())}`);

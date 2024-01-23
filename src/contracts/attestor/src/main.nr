@@ -25,7 +25,7 @@ contract Attestor {
             field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
         },
     };
-    use dep::protocol_types::{
+    use dep::aztec::protocol_types::{
         abis::function_selector::FunctionSelector,
         address::AztecAddress,
     };
@@ -44,7 +44,7 @@ contract Attestor {
 
     struct Storage {
         admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
-        blacklists: Map<PublicState<Field, FIELD_SERIALIZED_LEN>>,
+        blacklists: Map<AztecAddress, PublicState<Field, FIELD_SERIALIZED_LEN>>,
     }
 
     impl Storage {
@@ -89,13 +89,13 @@ contract Attestor {
     pub fn add_to_blacklist(token: AztecAddress, shield_id: Field, proof: [Field; DEPTH]) {
         assert(storage.admin.read().eq(context.msg_sender()), "caller is not admin");
 
-        let mut old_root = storage.blacklists.at(token.to_field()).read();
+        let mut old_root = storage.blacklists.at(token).read();
         if old_root == 0 {
             old_root = EMPTY_ROOT;
         }
         let new_root = smt::insert(shield_id, old_root, proof);
 
-        storage.blacklists.at(token.to_field()).write(new_root);
+        storage.blacklists.at(token).write(new_root);
 
         emit_unencrypted_log(&mut context, token.to_field());
         emit_unencrypted_log(&mut context, shield_id);
@@ -105,10 +105,10 @@ contract Attestor {
     pub fn remove_from_blacklist(token: AztecAddress, shield_id: Field, proof: [Field; DEPTH]) {
         assert(storage.admin.read().eq(context.msg_sender()), "caller is not admin");
 
-        let old_root = storage.blacklists.at(token.to_field()).read();
+        let old_root = storage.blacklists.at(token).read();
         let new_root = smt::remove(shield_id, old_root, proof);
 
-        storage.blacklists.at(token.to_field()).write(new_root);
+        storage.blacklists.at(token).write(new_root);
 
         emit_unencrypted_log(&mut context, token.to_field());
         emit_unencrypted_log(&mut context, shield_id);
@@ -155,7 +155,7 @@ contract Attestor {
 
     #[aztec(public)]
     internal fn _assert_blacklist_root(token: AztecAddress, rhs: Field) {
-        let mut lhs = storage.blacklists.at(token.to_field()).read();
+        let mut lhs = storage.blacklists.at(token).read();
         if lhs == 0 {
             lhs = EMPTY_ROOT;
         }
@@ -171,7 +171,7 @@ contract Attestor {
     }
 
     unconstrained fn get_blacklist_root(token: AztecAddress) -> pub Field {
-        let mut root = storage.blacklists.at(token.to_field()).read();
+        let mut root = storage.blacklists.at(token).read();
         if root == 0 {
             root = EMPTY_ROOT;
         }
@@ -179,7 +179,7 @@ contract Attestor {
     }
 
     unconstrained fn is_not_blacklisted(token: AztecAddress, shield_id: Field, proof: [Field; DEPTH]) -> pub bool {
-        let mut root = storage.blacklists.at(token.to_field()).read();
+        let mut root = storage.blacklists.at(token).read();
         if root == 0 {
             root = EMPTY_ROOT;
         }
