@@ -15,7 +15,7 @@ struct PartitionTable {
     // Stores the attestations collected
     attestations: BoundedVec, 
     // The older the block number, the less risky the shield is
-    max_block_number: Field, 
+    max_block_number: u64, 
     is_table_cleared: bool,
 }
 
@@ -39,6 +39,23 @@ impl PartitionTable {
             is_table_cleared: false,
         }
     }
+    
+    pub fn with_max_block_number(&mut self, max_block_number: u64) {
+        self.max_block_number = max_block_number;
+    }
+    
+    pub fn join(self, other: PartitionTable) -> Self {
+        Self {
+            shield_ids: self.shield_ids.or(other.shield_ids),
+            attestations: self.attestations.and(other.attestations),
+            max_block_number: if self.max_block_number > other.max_block_number {
+                self.max_block_number
+            } else {
+                other.max_block_number
+            },
+            is_table_cleared: self.is_table_cleared | other.is_table_cleared,
+        }
+    }
 
     pub fn serialize(self) -> [Field; PARTITION_TABLE_LEN] {
         let mut res = [0; PARTITION_TABLE_LEN];
@@ -56,7 +73,7 @@ impl PartitionTable {
         }
         offset += N+1;
 
-        res[offset] = self.max_block_number;
+        res[offset] = self.max_block_number as Field;
         offset += 1;
 
         res[offset] = self.is_table_cleared as Field;
@@ -82,7 +99,7 @@ impl PartitionTable {
         res.attestations = BoundedVec::deserialize(attestations_serialized);
         offset += N+1;
 
-        res.max_block_number = serialized[offset];
+        res.max_block_number = serialized[offset] as u64;
         offset += 1;
 
         res.is_table_cleared = serialized[offset] as bool;

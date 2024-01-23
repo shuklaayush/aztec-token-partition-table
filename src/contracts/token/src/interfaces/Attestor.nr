@@ -7,6 +7,7 @@ use dep::aztec::protocol_types::{
   abis::function_selector::FunctionSelector,
   constants::RETURN_VALUES_LENGTH,
 };
+
 use dep::common_types::partition_table::PartitionTable;
 
 struct TokenAddToBlacklistStruct {
@@ -29,6 +30,76 @@ impl AttestorPrivateContextInterface {
       }
   }
   
+  pub fn request_attestation(
+    self,
+    context: &mut PrivateContext,
+    partition_table: PartitionTable,
+    blacklist_root: Field,
+    proof: [Field;32]
+  ) -> [Field; RETURN_VALUES_LENGTH] {
+    let mut serialized_args = [0; 57];
+    serialized_args[0] = partition_table.shield_ids.len as Field;
+    serialized_args[1] = partition_table.shield_ids.elems[0];
+    serialized_args[2] = partition_table.shield_ids.elems[1];
+    serialized_args[3] = partition_table.shield_ids.elems[2];
+    serialized_args[4] = partition_table.shield_ids.elems[3];
+    serialized_args[5] = partition_table.shield_ids.elems[4];
+    serialized_args[6] = partition_table.shield_ids.elems[5];
+    serialized_args[7] = partition_table.shield_ids.elems[6];
+    serialized_args[8] = partition_table.shield_ids.elems[7];
+    serialized_args[9] = partition_table.shield_ids.elems[8];
+    serialized_args[10] = partition_table.shield_ids.elems[9];
+    serialized_args[11] = partition_table.attestations.len as Field;
+    serialized_args[12] = partition_table.attestations.elems[0];
+    serialized_args[13] = partition_table.attestations.elems[1];
+    serialized_args[14] = partition_table.attestations.elems[2];
+    serialized_args[15] = partition_table.attestations.elems[3];
+    serialized_args[16] = partition_table.attestations.elems[4];
+    serialized_args[17] = partition_table.attestations.elems[5];
+    serialized_args[18] = partition_table.attestations.elems[6];
+    serialized_args[19] = partition_table.attestations.elems[7];
+    serialized_args[20] = partition_table.attestations.elems[8];
+    serialized_args[21] = partition_table.attestations.elems[9];
+    serialized_args[22] = partition_table.max_block_number as Field;
+    serialized_args[23] = partition_table.is_table_cleared as Field;
+    serialized_args[24] = blacklist_root;
+    serialized_args[25] = proof[0];
+    serialized_args[26] = proof[1];
+    serialized_args[27] = proof[2];
+    serialized_args[28] = proof[3];
+    serialized_args[29] = proof[4];
+    serialized_args[30] = proof[5];
+    serialized_args[31] = proof[6];
+    serialized_args[32] = proof[7];
+    serialized_args[33] = proof[8];
+    serialized_args[34] = proof[9];
+    serialized_args[35] = proof[10];
+    serialized_args[36] = proof[11];
+    serialized_args[37] = proof[12];
+    serialized_args[38] = proof[13];
+    serialized_args[39] = proof[14];
+    serialized_args[40] = proof[15];
+    serialized_args[41] = proof[16];
+    serialized_args[42] = proof[17];
+    serialized_args[43] = proof[18];
+    serialized_args[44] = proof[19];
+    serialized_args[45] = proof[20];
+    serialized_args[46] = proof[21];
+    serialized_args[47] = proof[22];
+    serialized_args[48] = proof[23];
+    serialized_args[49] = proof[24];
+    serialized_args[50] = proof[25];
+    serialized_args[51] = proof[26];
+    serialized_args[52] = proof[27];
+    serialized_args[53] = proof[28];
+    serialized_args[54] = proof[29];
+    serialized_args[55] = proof[30];
+    serialized_args[56] = proof[31];
+
+    context.call_private_function(self.address, FunctionSelector::from_field(0x9974f1d6), serialized_args)
+  }
+  
+
   pub fn add_to_blacklist(
     self,
     context: &mut PrivateContext,
@@ -120,76 +191,6 @@ impl AttestorPrivateContextInterface {
     serialized_args[33] = proof[31];
 
     context.call_public_function(self.address, FunctionSelector::from_field(0xe07941f0), serialized_args)
-  }
-  
-
-  pub fn request_attestation(
-    self,
-    context: &mut PrivateContext,
-    partition_table: PartitionTable,
-    blacklist_root: Field,
-    proof: [Field;32]
-  ) -> [Field; RETURN_VALUES_LENGTH] {
-    let mut serialized_args = [0; 57];
-    serialized_args[0] = partition_table.shield_ids.len;
-    serialized_args[1] = partition_table.shield_ids.elems[0];
-    serialized_args[2] = partition_table.shield_ids.elems[1];
-    serialized_args[3] = partition_table.shield_ids.elems[2];
-    serialized_args[4] = partition_table.shield_ids.elems[3];
-    serialized_args[5] = partition_table.shield_ids.elems[4];
-    serialized_args[6] = partition_table.shield_ids.elems[5];
-    serialized_args[7] = partition_table.shield_ids.elems[6];
-    serialized_args[8] = partition_table.shield_ids.elems[7];
-    serialized_args[9] = partition_table.shield_ids.elems[8];
-    serialized_args[10] = partition_table.shield_ids.elems[9];
-    serialized_args[11] = partition_table.attestations.len;
-    serialized_args[12] = partition_table.attestations.elems[0];
-    serialized_args[13] = partition_table.attestations.elems[1];
-    serialized_args[14] = partition_table.attestations.elems[2];
-    serialized_args[15] = partition_table.attestations.elems[3];
-    serialized_args[16] = partition_table.attestations.elems[4];
-    serialized_args[17] = partition_table.attestations.elems[5];
-    serialized_args[18] = partition_table.attestations.elems[6];
-    serialized_args[19] = partition_table.attestations.elems[7];
-    serialized_args[20] = partition_table.attestations.elems[8];
-    serialized_args[21] = partition_table.attestations.elems[9];
-    serialized_args[22] = partition_table.max_block_number;
-    serialized_args[23] = partition_table.is_table_cleared as Field;
-    serialized_args[24] = blacklist_root;
-    serialized_args[25] = proof[0];
-    serialized_args[26] = proof[1];
-    serialized_args[27] = proof[2];
-    serialized_args[28] = proof[3];
-    serialized_args[29] = proof[4];
-    serialized_args[30] = proof[5];
-    serialized_args[31] = proof[6];
-    serialized_args[32] = proof[7];
-    serialized_args[33] = proof[8];
-    serialized_args[34] = proof[9];
-    serialized_args[35] = proof[10];
-    serialized_args[36] = proof[11];
-    serialized_args[37] = proof[12];
-    serialized_args[38] = proof[13];
-    serialized_args[39] = proof[14];
-    serialized_args[40] = proof[15];
-    serialized_args[41] = proof[16];
-    serialized_args[42] = proof[17];
-    serialized_args[43] = proof[18];
-    serialized_args[44] = proof[19];
-    serialized_args[45] = proof[20];
-    serialized_args[46] = proof[21];
-    serialized_args[47] = proof[22];
-    serialized_args[48] = proof[23];
-    serialized_args[49] = proof[24];
-    serialized_args[50] = proof[25];
-    serialized_args[51] = proof[26];
-    serialized_args[52] = proof[27];
-    serialized_args[53] = proof[28];
-    serialized_args[54] = proof[29];
-    serialized_args[55] = proof[30];
-    serialized_args[56] = proof[31];
-
-    context.call_private_function(self.address, FunctionSelector::from_field(0x9974f1d6), serialized_args)
   }
   
 }
