@@ -97,7 +97,7 @@ contract Attestor {
 
         storage.blacklists.at(token).write(new_root);
 
-        emit_unencrypted_log(&mut context, token.to_field());
+        emit_unencrypted_log(&mut context, token);
         emit_unencrypted_log(&mut context, shield_id);
     }
 
@@ -110,7 +110,7 @@ contract Attestor {
 
         storage.blacklists.at(token).write(new_root);
 
-        emit_unencrypted_log(&mut context, token.to_field());
+        emit_unencrypted_log(&mut context, token);
         emit_unencrypted_log(&mut context, shield_id);
     }
 
