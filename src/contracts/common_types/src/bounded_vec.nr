@@ -36,8 +36,7 @@ impl BoundedVec {
     pub fn contains(self, elem: Field) -> bool {
         let mut res = false;
         for i in 0..N {
-            // TODO: Use u32 at places if required
-            if (i as u32 < self.len as u32) & (self.elems[i] == elem) {
+            if (i < self.len) & (self.elems[i] == elem) {
                 res = true;
             }
         }
@@ -46,12 +45,17 @@ impl BoundedVec {
     
     pub fn or(self, other: BoundedVec) -> Self {
         let mut res = BoundedVec::default();
-        res.len = self.len + other.len;
         for i in 0..N {
-            if i as u64 < self.len {
-                res.elems[i] = self.elems[i];
-            } else if i < self.len + other.len {
-                res.elems[i] = other.elems[i - self.len];
+            if i < self.len {
+                res.elems[res.len] = self.elems[i];
+                res.len += 1;
+            }
+        }
+        for i in 0..N {
+            // if (i < other.len) & !self.contains(other.elems[i]) {
+            if i < other.len {
+                res.elems[res.len] = other.elems[i];
+                res.len += 1;
             }
         }
         res
@@ -59,10 +63,11 @@ impl BoundedVec {
 
     pub fn and(self, other: BoundedVec) -> Self {
         let mut res = BoundedVec::default();
-        res.len = 0;
         for i in 0..N {
-            if self.contains(other.elems[i]) {
-                res.push(other.elems[i]);
+            // if (i < other.len) & self.contains(other.elems[i]) {
+            if i < other.len {
+                res.elems[res.len] = other.elems[i];
+                res.len += 1;
             }
         }
         res

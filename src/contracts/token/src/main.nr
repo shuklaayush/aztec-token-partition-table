@@ -18,6 +18,7 @@ contract Token {
     // use dep::compressed_string::{FieldCompressedString, FieldCompressedStringSerializationMethods};
 
     use dep::aztec::{
+        log::emit_unencrypted_log_from_private,
         note::{
             note_getter_options::NoteGetterOptions,
             note_header::NoteHeader,
@@ -47,6 +48,8 @@ contract Token {
         },
     };
     // docs:end:import_authwit
+
+    use dep::common_types::{partition_table::PartitionTable, bounded_vec::N};
 
     use crate::interfaces::Attestor::AttestorPrivateContextInterface as Attestor;
     use crate::types::{
@@ -323,7 +326,8 @@ contract Token {
         // Remove the note from the pending shields set 
         pending_shields.remove(note);
 
-        storage.balances.at(to).add(SafeU120::new(amount));
+        let pt = PartitionTable::default();
+        storage.balances.at(to).add(SafeU120::new(amount), pt);
 
         let selector = FunctionSelector::from_signature("_increment_num_shields()");
         let _void = context.call_public_function(context.this_address(), selector, []);
@@ -339,7 +343,13 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
-        storage.balances.at(from).sub(SafeU120::new(amount));
+        let pt = storage.balances.at(from).sub(SafeU120::new(amount));
+
+        for i in 0..N {
+            if i < pt.attestations.len() {
+                emit_unencrypted_log_from_private(&mut context, pt.attestations.at(i));
+            }
+        }
 
         let selector = FunctionSelector::from_signature("_increase_public_balance((Field),Field)");
         let _void = context.call_public_function(context.this_address(), selector, [to.to_field(), amount]);
@@ -358,9 +368,9 @@ contract Token {
         // docs:end:assert_current_call_valid_authwit
 
         let amount = SafeU120::new(amount);
-        storage.balances.at(from).sub(amount);
+        let pt = storage.balances.at(from).sub(amount);
         // docs:start:increase_private_balance
-        storage.balances.at(to).add(amount);
+        storage.balances.at(to).add(amount, pt);
         // docs:end:increase_private_balance
     }
     // docs:end:transfer

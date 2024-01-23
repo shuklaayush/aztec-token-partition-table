@@ -40,10 +40,6 @@ impl PartitionTable {
         }
     }
     
-    pub fn with_max_block_number(&mut self, max_block_number: u64) {
-        self.max_block_number = max_block_number;
-    }
-    
     pub fn join(self, other: PartitionTable) -> Self {
         Self {
             shield_ids: self.shield_ids.or(other.shield_ids),
@@ -53,7 +49,7 @@ impl PartitionTable {
             } else {
                 other.max_block_number
             },
-            is_table_cleared: self.is_table_cleared | other.is_table_cleared,
+            is_table_cleared: self.is_table_cleared & other.is_table_cleared,
         }
     }
 

@@ -124,25 +124,27 @@ impl BalanceSet {
         self.set.insert(&mut new_note, true);
     }
 
-    pub fn add(self: Self, addend: SafeU120) {
-        let mut addend_note = TokenNote::new(addend, self.owner, PartitionTable::default());
+    pub fn add(self: Self, addend: SafeU120, partition_table: PartitionTable) {
+        let mut addend_note = TokenNote::new(addend, self.owner, partition_table);
 
         // docs:start:insert
         self.set.insert(&mut addend_note, true);
         // docs:end:insert
     }
 
-    pub fn sub(self: Self, subtrahend: SafeU120) {
+    pub fn sub(self: Self, subtrahend: SafeU120) -> PartitionTable {
         // docs:start:get_notes
         let options = NoteGetterOptions::with_filter(filter_notes_min_sum, subtrahend);
         let maybe_notes = self.set.get_notes(options);
         // docs:end:get_notes
 
+        let mut pt1 = PartitionTable::default();
+        let mut pt2 = PartitionTable::default();
         let mut minuend: SafeU120 = SafeU120::min();
         for i in 0..maybe_notes.len() {
             if maybe_notes[i].is_some() {
                 let note = maybe_notes[i].unwrap_unchecked();
-
+                
                 // Removes the note from the owner's set of notes.
                 // This will call the the `compute_nullifer` function of the `token_note`
                 // which require knowledge of the secret key (currently the users encryption key).
@@ -150,17 +152,22 @@ impl BalanceSet {
                 // docs:start:remove
                 self.set.remove(note);
                 // docs:end:remove
+                
+                pt1 = pt1.join(note.partition_table);
+                pt2 = note.partition_table;
 
                 minuend = minuend.add(note.amount);
             }
         }
-
+        
         // This is to provide a nicer error msg,
         // without it minuend-subtrahend would still catch it, but more generic error then.
         // without the == true, it includes 'minuend.ge(subtrahend)' as part of the error.
         assert(minuend.ge(subtrahend) == true, "Balance too low");
 
-        self.add(minuend.sub(subtrahend));
+        self.add(minuend.sub(subtrahend), pt2);
+        
+        pt1
     }
 }
 
