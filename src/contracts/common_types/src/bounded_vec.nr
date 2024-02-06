@@ -33,14 +33,20 @@ impl BoundedVec {
         self.len += 1;
     }
 
-    pub fn contains(self, elem: Field) -> bool {
-        let mut res = false;
-        for i in 0..N {
-            if (i < self.len) & (self.elems[i] == elem) {
-                res = true;
+    unconstrained fn get_index(self, item: Field) -> u64 {
+        let mut index = 0;
+        for i in 0..self.len {
+            if (self.elems[i] == item) {
+                index = i;
             }
         }
-        res
+        index
+    }
+
+    pub fn contains(self, elem: Field) -> bool {
+        let index = self.get_index(elem);
+        assert(index < self.len);
+        self.elems[index] == elem
     }
     
     pub fn or(self, other: BoundedVec) -> Self {
@@ -52,8 +58,7 @@ impl BoundedVec {
             }
         }
         for i in 0..N {
-            // if (i < other.len) & !self.contains(other.elems[i]) {
-            if i < other.len {
+            if (i < other.len) & !self.contains(other.elems[i]) {
                 res.elems[res.len] = other.elems[i];
                 res.len += 1;
             }
@@ -64,8 +69,7 @@ impl BoundedVec {
     pub fn and(self, other: BoundedVec) -> Self {
         let mut res = BoundedVec::default();
         for i in 0..N {
-            // if (i < other.len) & self.contains(other.elems[i]) {
-            if i < other.len {
+            if (i < other.len) & self.contains(other.elems[i]) {
                 res.elems[res.len] = other.elems[i];
                 res.len += 1;
             }
@@ -91,4 +95,3 @@ impl BoundedVec {
         res
     }
 }
-
