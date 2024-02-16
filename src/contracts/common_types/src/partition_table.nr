@@ -32,14 +32,9 @@ impl Default for PartitionTable {
 
 impl PartitionTable {
     pub fn new(shield_ids: BoundedVec2, attestations: BoundedVec2) -> Self {
-        Self {
-            shield_ids,
-            attestations,
-            max_block_number: 0,
-            is_table_cleared: false,
-        }
+        Self { shield_ids, attestations, max_block_number: 0, is_table_cleared: false }
     }
-    
+
     pub fn join(self, other: PartitionTable) -> Self {
         Self {
             shield_ids: self.shield_ids.or(other.shield_ids),
@@ -49,7 +44,7 @@ impl PartitionTable {
             } else {
                 other.max_block_number
             },
-            is_table_cleared: self.is_table_cleared & other.is_table_cleared,
+            is_table_cleared: self.is_table_cleared & other.is_table_cleared
         }
     }
 
@@ -58,13 +53,13 @@ impl PartitionTable {
         let mut offset = 0;
 
         let shield_ids_serialized = self.shield_ids.serialize();
-        for i in 0..N+1 {
+        for i in 0..N + 1 {
             res[i + offset] = shield_ids_serialized[i];
         }
         offset += N+1;
 
         let attestations_serialized = self.attestations.serialize();
-        for i in 0..N+1 {
+        for i in 0..N + 1 {
             res[i + offset] = attestations_serialized[i];
         }
         offset += N+1;
@@ -73,7 +68,7 @@ impl PartitionTable {
         offset += 1;
 
         res[offset] = self.is_table_cleared as Field;
-        
+
         res
     }
 
@@ -81,15 +76,15 @@ impl PartitionTable {
         let mut res = PartitionTable::default();
         let mut offset = 0;
 
-        let mut shield_ids_serialized = [0; N+1];
-        for i in 0..N+1 {
+        let mut shield_ids_serialized = [0; N + 1];
+        for i in 0..N + 1 {
             shield_ids_serialized[i] = serialized[i + offset];
         }
         res.shield_ids = BoundedVec2::deserialize(shield_ids_serialized);
         offset += N+1;
 
-        let mut attestations_serialized = [0; N+1];
-        for i in 0..N+1 {
+        let mut attestations_serialized = [0; N + 1];
+        for i in 0..N + 1 {
             attestations_serialized[i] = serialized[i + offset];
         }
         res.attestations = BoundedVec2::deserialize(attestations_serialized);

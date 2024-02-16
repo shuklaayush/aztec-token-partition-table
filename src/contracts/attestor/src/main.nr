@@ -13,17 +13,10 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     use dep::aztec::{
-        protocol_types::{
-            abis::function_selector::FunctionSelector,
-            address::AztecAddress,
-        },
-        log::emit_unencrypted_log,
-        context::Context,
-        note::{
-            note_header::NoteHeader,
-            utils as note_utils
-        },
-        state_vars::{map::Map, public_state::PublicState},
+        protocol_types::{abis::function_selector::FunctionSelector, address::AztecAddress},
+        log::emit_unencrypted_log, context::Context,
+        note::{note_header::NoteHeader, utils as note_utils},
+        state_vars::{map::Map, public_state::PublicState}
     };
     use dep::common_types::{smt, partition_table::PartitionTable, bounded_vec2::{BoundedVec2, N}};
 
@@ -159,11 +152,11 @@ contract Attestor {
     }
 
     unconstrained fn compute_note_hash_and_nullifier(
-        contract_address: AztecAddress,
-        nonce: Field,
-        storage_slot: Field,
-        note_type_id: Field,
-        serialized_note: [Field; 0]
+        _contract_address: AztecAddress,
+        _nonce: Field,
+        _storage_slot: Field,
+        _note_type_id: Field,
+        _serialized_note: [Field; 0]
     ) -> pub [Field; 4] {
         [0; 4]
     }

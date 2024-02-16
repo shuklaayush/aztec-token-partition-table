@@ -20,7 +20,7 @@ impl BoundedVec2 {
     pub fn len(self) -> u64 {
         self.len
     }
-    
+
     pub fn at(self, index: u64) -> Field {
         // assert(index < self.len, "index out of bounds");
         self.elems[index]
@@ -52,7 +52,7 @@ impl BoundedVec2 {
         }
         res
     }
-    
+
     pub fn or(self, other: BoundedVec2) -> Self {
         let mut res = BoundedVec2::default();
         for i in 0..N {
@@ -82,7 +82,7 @@ impl BoundedVec2 {
     }
 
     pub fn serialize(self) -> [Field; N+1] {
-        let mut res = [0; N+1];
+        let mut res = [0; N + 1];
         res[0] = self.len as Field;
         for i in 0..N {
             res[i + 1] = self.elems[i];

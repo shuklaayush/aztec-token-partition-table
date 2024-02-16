@@ -54,7 +54,11 @@ impl<T> BalancesMap<T> {
     }
 
     // At least one note has attestation.
-    unconstrained pub fn has_attestation<T_SERIALIZED_LEN>(self: Self, owner: AztecAddress, attestor: AztecAddress) -> bool where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
+    unconstrained pub fn has_attestation<T_SERIALIZED_LEN>(
+        self: Self,
+        owner: AztecAddress,
+        attestor: AztecAddress
+    ) -> bool where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
         let options = NoteViewerOptions::new();
         let maybe_notes = self.map.at(owner).view_notes(options);
         let mut res = false;
@@ -67,7 +71,11 @@ impl<T> BalancesMap<T> {
         res
     }
 
-    unconstrained pub fn last_unattested_note_unc<T_SERIALIZED_LEN>(self: Self, owner: AztecAddress, attestor: AztecAddress) -> Option<T> where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
+    unconstrained pub fn last_unattested_note_unc<T_SERIALIZED_LEN>(
+        self: Self,
+        owner: AztecAddress,
+        attestor: AztecAddress
+    ) -> Option<T> where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
         let options = NoteViewerOptions::new();
         let maybe_notes = self.map.at(owner).view_notes(options);
 
@@ -83,7 +91,11 @@ impl<T> BalancesMap<T> {
         selected
     }
 
-    pub fn last_unattested_note<T_SERIALIZED_LEN>(self: Self, owner: AztecAddress, attestor: AztecAddress) -> Option<T> where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
+    pub fn last_unattested_note<T_SERIALIZED_LEN>(
+        self: Self,
+        owner: AztecAddress,
+        attestor: AztecAddress
+    ) -> Option<T> where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
         let options = NoteGetterOptions::with_filter(filter_notes_unattested, attestor);
         let maybe_notes = self.map.at(owner).get_notes(options);
 
@@ -96,7 +108,12 @@ impl<T> BalancesMap<T> {
         selected
     }
 
-    pub fn add_attestation<T_SERIALIZED_LEN>(self: Self, owner: AztecAddress, note: T, attestor: AztecAddress) where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
+    pub fn add_attestation<T_SERIALIZED_LEN>(
+        self: Self,
+        owner: AztecAddress,
+        note: T,
+        attestor: AztecAddress
+    ) where T: NoteInterface<T_SERIALIZED_LEN> + OwnedNote {
         let shield_ids = note.get_partition_table().shield_ids;
         let mut attestations = note.get_partition_table().attestations;
         attestations.push(attestor.to_field());
@@ -159,7 +176,7 @@ impl<T> BalancesMap<T> {
         assert(minuend.ge(subtrahend) == true, "Balance too low");
 
         self.add(owner, minuend.sub(subtrahend), pt2);
-        
+
         pt1
     }
 }
