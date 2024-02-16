@@ -18,7 +18,7 @@ contract Attestor {
         note::{note_header::NoteHeader, utils as note_utils},
         state_vars::{map::Map, public_state::PublicState}
     };
-    use dep::common_types::{smt, partition_table::PartitionTable, bounded_vec2::{BoundedVec2, N}};
+    use dep::common_types::{smt, partition_table::PartitionTable};
 
     ////////////////////////////////////////////////////////////////////////////////
     // CONSTANTS

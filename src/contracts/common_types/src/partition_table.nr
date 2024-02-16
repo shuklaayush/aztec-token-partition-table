@@ -1,7 +1,8 @@
 use dep::std::default::Default;
 
-use crate::bounded_vec2::{BoundedVec2, N};
+use crate::bounded_vec2::BoundedVec2;
 
+global BOUNDED_VEC_LEN: Field = 10;
 global PARTITION_TABLE_LEN: Field = 24;
 
 // struct Shield {
@@ -11,9 +12,9 @@ global PARTITION_TABLE_LEN: Field = 24;
 
 struct PartitionTable {
     // Stores the origin shield deposit IDs
-    shield_ids: BoundedVec2,
+    shield_ids: BoundedVec2<BOUNDED_VEC_LEN, BOUNDED_VEC_LEN + 1>,
     // Stores the attestations collected
-    attestations: BoundedVec2, 
+    attestations: BoundedVec2<BOUNDED_VEC_LEN, BOUNDED_VEC_LEN + 1>, 
     // The older the block number, the less risky the shield is
     max_block_number: u64, 
     is_table_cleared: bool,
@@ -31,7 +32,10 @@ impl Default for PartitionTable {
 }
 
 impl PartitionTable {
-    pub fn new(shield_ids: BoundedVec2, attestations: BoundedVec2) -> Self {
+    pub fn new(
+        shield_ids: BoundedVec2<BOUNDED_VEC_LEN, BOUNDED_VEC_LEN + 1>,
+        attestations: BoundedVec2<BOUNDED_VEC_LEN, BOUNDED_VEC_LEN + 1>
+    ) -> Self {
         Self { shield_ids, attestations, max_block_number: 0, is_table_cleared: false }
     }
 
@@ -53,16 +57,16 @@ impl PartitionTable {
         let mut offset = 0;
 
         let shield_ids_serialized = self.shield_ids.serialize();
-        for i in 0..N + 1 {
+        for i in 0..BOUNDED_VEC_LEN + 1 {
             res[i + offset] = shield_ids_serialized[i];
         }
-        offset += N+1;
+        offset += BOUNDED_VEC_LEN + 1;
 
         let attestations_serialized = self.attestations.serialize();
-        for i in 0..N + 1 {
+        for i in 0..BOUNDED_VEC_LEN + 1 {
             res[i + offset] = attestations_serialized[i];
         }
-        offset += N+1;
+        offset += BOUNDED_VEC_LEN + 1;
 
         res[offset] = self.max_block_number as Field;
         offset += 1;
@@ -76,19 +80,19 @@ impl PartitionTable {
         let mut res = PartitionTable::default();
         let mut offset = 0;
 
-        let mut shield_ids_serialized = [0; N + 1];
-        for i in 0..N + 1 {
+        let mut shield_ids_serialized = [0; BOUNDED_VEC_LEN + 1];
+        for i in 0..BOUNDED_VEC_LEN + 1 {
             shield_ids_serialized[i] = serialized[i + offset];
         }
         res.shield_ids = BoundedVec2::deserialize(shield_ids_serialized);
-        offset += N+1;
+        offset += BOUNDED_VEC_LEN + 1;
 
-        let mut attestations_serialized = [0; N + 1];
-        for i in 0..N + 1 {
+        let mut attestations_serialized = [0; BOUNDED_VEC_LEN + 1];
+        for i in 0..BOUNDED_VEC_LEN + 1 {
             attestations_serialized[i] = serialized[i + offset];
         }
         res.attestations = BoundedVec2::deserialize(attestations_serialized);
-        offset += N+1;
+        offset += BOUNDED_VEC_LEN + 1;
 
         res.max_block_number = serialized[offset] as u64;
         offset += 1;

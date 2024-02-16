@@ -42,7 +42,7 @@ contract Token {
     };
     // docs:end:import_authwit
 
-    use dep::common_types::{partition_table::PartitionTable, bounded_vec2::N};
+    use dep::common_types::{partition_table::PartitionTable};
 
     use crate::interfaces::Attestor::AttestorPrivateContextInterface as Attestor;
     use crate::types::{
@@ -288,7 +288,7 @@ contract Token {
 
         let pt = storage.balances.sub(from, SafeU120::new(amount));
 
-        for i in 0..N {
+        for i in 0..pt.attestations.max_len() {
             if i < pt.attestations.len() {
                 emit_unencrypted_log_from_private(&mut context, pt.attestations.at(i));
             }
