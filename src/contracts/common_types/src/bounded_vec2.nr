@@ -2,12 +2,12 @@ use dep::std::default::Default;
 
 global N: u64 = 10;
 
-struct BoundedVec {
+struct BoundedVec2 {
     len: u64,
     elems: [Field; N],
 }
 
-impl Default for BoundedVec {
+impl Default for BoundedVec2 {
     fn default() -> Self {
         Self {
             len: 0,
@@ -16,7 +16,7 @@ impl Default for BoundedVec {
     }
 }
 
-impl BoundedVec {
+impl BoundedVec2 {
     pub fn len(self) -> u64 {
         self.len
     }
@@ -44,13 +44,17 @@ impl BoundedVec {
     }
 
     pub fn contains(self, elem: Field) -> bool {
-        let index = self.get_index(elem);
-        assert(index < self.len);
-        self.elems[index] == elem
+        let mut res = false;
+        if self.len > 0 {
+            let index = self.get_index(elem);
+            assert(index < self.len);
+            res = (self.elems[index] == elem);
+        }
+        res
     }
     
-    pub fn or(self, other: BoundedVec) -> Self {
-        let mut res = BoundedVec::default();
+    pub fn or(self, other: BoundedVec2) -> Self {
+        let mut res = BoundedVec2::default();
         for i in 0..N {
             if i < self.len {
                 res.elems[res.len] = self.elems[i];
@@ -66,8 +70,8 @@ impl BoundedVec {
         res
     }
 
-    pub fn and(self, other: BoundedVec) -> Self {
-        let mut res = BoundedVec::default();
+    pub fn and(self, other: BoundedVec2) -> Self {
+        let mut res = BoundedVec2::default();
         for i in 0..N {
             if (i < other.len) & self.contains(other.elems[i]) {
                 res.elems[res.len] = other.elems[i];
@@ -87,7 +91,7 @@ impl BoundedVec {
     }
 
     pub fn deserialize(serialized: [Field; N+1]) -> Self {
-        let mut res = BoundedVec::default();
+        let mut res = BoundedVec2::default();
         res.len = serialized[0] as u64;
         for i in 0..N {
             res.elems[i] = serialized[i + 1];

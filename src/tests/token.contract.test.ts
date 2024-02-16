@@ -1001,5 +1001,58 @@ describe('e2e_token_contract', () => {
 
       expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(true);
     });
+
+    it('Attestation transfer', async () => {
+      let shieldId = 0n;
+
+      let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
+      const proof = await attestorSim.getSiblingPath(accounts[0].address, shieldId);
+
+      const txClaim = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proof, 0).send();
+      const receiptClaim = await txClaim.wait();
+      expect(receiptClaim.status).toBe(TxStatus.MINED);
+
+      expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(true);
+      expect(await asset.methods.has_attestation(accounts[1].address, attestor.address).view()).toBe(false);
+
+      const balance0 = await asset.methods.balance_of_private(accounts[0].address).view();
+      const amount = balance0 / 2n;
+      expect(amount).toBeGreaterThan(0n);
+      const tx = asset.methods.transfer(accounts[0].address, accounts[1].address, amount, 0).send();
+      const receipt = await tx.wait();
+      expect(receipt.status).toBe(TxStatus.MINED);
+      tokenSim.transferPrivate(accounts[0].address, accounts[1].address, amount);
+      
+      expect(await asset.methods.has_attestation(accounts[1].address, attestor.address).view()).toBe(true);
+    });
+
+    it('Deposit ID transfer', async () => {
+      let shieldId = 0n;
+      let token = asset.address;
+
+      const proof = await attestorSim.getSiblingPath(token, shieldId);
+      const tx1 = attestor.methods.add_to_blacklist(token, shieldId, proof).send();
+      const receipt1 = await tx1.wait();
+      expect(receipt1.status).toBe(TxStatus.MINED);
+      await attestorSim.addToBlacklist(token, shieldId);
+
+      expect(await attestor.methods.is_not_blacklisted(asset, shieldId, proof).view()).toEqual(false);
+
+      const balance0 = await asset.methods.balance_of_private(accounts[0].address).view();
+      const amount = balance0 / 2n;
+      expect(amount).toBeGreaterThan(0n);
+      const tx = asset.methods.transfer(accounts[0].address, accounts[1].address, amount, 0).send();
+      const receipt = await tx.wait();
+      expect(receipt.status).toBe(TxStatus.MINED);
+      tokenSim.transferPrivate(accounts[0].address, accounts[1].address, amount);
+      
+      // Request attestation should fail i.e. not add any attestation
+      const root = await attestorSim.getRoot(token);
+      const txClaim = asset.methods.request_attestation(accounts[1].address, attestor.address, root, proof, 0).send();
+      const receiptClaim = await txClaim.wait();
+      expect(receiptClaim.status).toBe(TxStatus.MINED);
+
+      expect(await asset.methods.has_attestation(accounts[1].address, attestor.address).view()).toBe(false);
+    });
   });
 });

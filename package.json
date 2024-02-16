@@ -34,12 +34,12 @@
     "rootDir": "./src"
   },
   "dependencies": {
-    "@aztec/accounts": "0.20.0",
-    "@aztec/aztec.js": "0.20.0",
-    "@aztec/circuits.js": "0.20.0",
-    "@aztec/foundation": "0.20.0",
-    "@aztec/merkle-tree": "0.20.0",
-    "@aztec/types": "0.20.0"
+    "@aztec/accounts": "0.24.0",
+    "@aztec/aztec.js": "0.24.0",
+    "@aztec/circuits.js": "0.24.0",
+    "@aztec/foundation": "0.24.0",
+    "@aztec/merkle-tree": "0.24.0",
+    "@aztec/types": "0.24.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
@@ -62,5 +62,6 @@
     "src",
     "!*.test.*"
   ],
-  "types": "./dest/index.d.ts"
+  "types": "./dest/index.d.ts",
+  "packageManager": "yarn@4.1.0"
 }

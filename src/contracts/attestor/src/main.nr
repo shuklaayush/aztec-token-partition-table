@@ -13,6 +13,10 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     use dep::aztec::{
+        protocol_types::{
+            abis::function_selector::FunctionSelector,
+            address::AztecAddress,
+        },
         log::emit_unencrypted_log,
         context::Context,
         note::{
@@ -20,16 +24,8 @@ contract Attestor {
             utils as note_utils
         },
         state_vars::{map::Map, public_state::PublicState},
-        types::type_serialization::{
-            address_serialization::{AddressSerializationMethods, AZTEC_ADDRESS_SERIALIZED_LEN},
-            field_serialization::{FieldSerializationMethods, FIELD_SERIALIZED_LEN},
-        },
     };
-    use dep::aztec::protocol_types::{
-        abis::function_selector::FunctionSelector,
-        address::AztecAddress,
-    };
-    use dep::common_types::{smt, partition_table::PartitionTable, bounded_vec::{BoundedVec, N}, type_serialization::bounded_vec_serialization::BoundedVecSerializationMethods};
+    use dep::common_types::{smt, partition_table::PartitionTable, bounded_vec2::{BoundedVec2, N}};
 
     ////////////////////////////////////////////////////////////////////////////////
     // CONSTANTS
@@ -43,32 +39,8 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
-        admin: PublicState<AztecAddress, AZTEC_ADDRESS_SERIALIZED_LEN>,
-        blacklists: Map<AztecAddress, PublicState<Field, FIELD_SERIALIZED_LEN>>,
-    }
-
-    impl Storage {
-        fn init(context: Context) -> Self {
-            Storage {
-                admin: PublicState::new(
-                    context,
-                    1,
-                    AddressSerializationMethods,
-                ),
-                // Token address -> BlacklistNote
-                blacklists: Map::new(
-                    context,
-                    2,
-                    |context, slot| {
-                        PublicState::new(
-                            context,
-                            slot,
-                            FieldSerializationMethods,
-                        )
-                    },
-                ),
-            }
-        }
+        admin: PublicState<AztecAddress>,
+        blacklists: Map<AztecAddress, PublicState<Field>>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -190,6 +162,7 @@ contract Attestor {
         contract_address: AztecAddress,
         nonce: Field,
         storage_slot: Field,
+        note_type_id: Field,
         serialized_note: [Field; 0]
     ) -> pub [Field; 4] {
         [0; 4]

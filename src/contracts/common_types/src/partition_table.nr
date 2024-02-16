@@ -1,6 +1,6 @@
 use dep::std::default::Default;
 
-use crate::bounded_vec::{BoundedVec, N};
+use crate::bounded_vec2::{BoundedVec2, N};
 
 global PARTITION_TABLE_LEN: Field = 24;
 
@@ -11,9 +11,9 @@ global PARTITION_TABLE_LEN: Field = 24;
 
 struct PartitionTable {
     // Stores the origin shield deposit IDs
-    shield_ids: BoundedVec,
+    shield_ids: BoundedVec2,
     // Stores the attestations collected
-    attestations: BoundedVec, 
+    attestations: BoundedVec2, 
     // The older the block number, the less risky the shield is
     max_block_number: u64, 
     is_table_cleared: bool,
@@ -22,8 +22,8 @@ struct PartitionTable {
 impl Default for PartitionTable {
     fn default() -> Self {
         Self {
-            shield_ids: BoundedVec::default(),
-            attestations: BoundedVec::default(),
+            shield_ids: BoundedVec2::default(),
+            attestations: BoundedVec2::default(),
             max_block_number: 0,
             is_table_cleared: false,
         }
@@ -31,7 +31,7 @@ impl Default for PartitionTable {
 }
 
 impl PartitionTable {
-    pub fn new(shield_ids: BoundedVec, attestations: BoundedVec) -> Self {
+    pub fn new(shield_ids: BoundedVec2, attestations: BoundedVec2) -> Self {
         Self {
             shield_ids,
             attestations,
@@ -85,14 +85,14 @@ impl PartitionTable {
         for i in 0..N+1 {
             shield_ids_serialized[i] = serialized[i + offset];
         }
-        res.shield_ids = BoundedVec::deserialize(shield_ids_serialized);
+        res.shield_ids = BoundedVec2::deserialize(shield_ids_serialized);
         offset += N+1;
 
         let mut attestations_serialized = [0; N+1];
         for i in 0..N+1 {
             attestations_serialized[i] = serialized[i + offset];
         }
-        res.attestations = BoundedVec::deserialize(attestations_serialized);
+        res.attestations = BoundedVec2::deserialize(attestations_serialized);
         offset += N+1;
 
         res.max_block_number = serialized[offset] as u64;

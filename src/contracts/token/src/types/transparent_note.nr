@@ -3,7 +3,7 @@ use dep::aztec::{
     note::{
         note_header::NoteHeader,
         note_interface::NoteInterface,
-        utils::compute_siloed_note_hash,
+        utils::compute_note_hash_for_consumption,
     },
     hash::{compute_secret_hash, pedersen_hash},
     context::PrivateContext,
@@ -22,38 +22,12 @@ struct TransparentNote {
     header: NoteHeader,
 }
 
-impl TransparentNote {
-
-    // CONSTRUCTORS
-
-    pub fn new(amount: Field, secret_hash: Field) -> Self {
-        TransparentNote {
-            amount: amount,
-            secret_hash: secret_hash,
-            secret: 0,
-            header: NoteHeader::empty(),
-        }
-    }
-
-    // new oracle call primitive
-    // get me the secret corresponding to this hash
-    pub fn new_from_secret(amount: Field, secret: Field) -> Self {
-        TransparentNote {
-            amount: amount,
-            secret_hash: compute_secret_hash(secret),
-            secret: secret,
-            header: NoteHeader::empty(),
-        }
-    }
-
-
-    // STANDARD NOTE_INTERFACE FUNCTIONS
-
-    pub fn serialize(self) -> [Field; TRANSPARENT_NOTE_LEN] {
+impl NoteInterface<TRANSPARENT_NOTE_LEN> for TransparentNote {
+    fn serialize_content(self) -> [Field; TRANSPARENT_NOTE_LEN] {
         [self.amount, self.secret_hash]
     }
 
-    pub fn deserialize(serialized_note: [Field; TRANSPARENT_NOTE_LEN]) -> Self {
+    fn deserialize_content(serialized_note: [Field; TRANSPARENT_NOTE_LEN]) -> Self {
         TransparentNote {
             amount: serialized_note[0],
             secret_hash: serialized_note[1],
@@ -62,29 +36,54 @@ impl TransparentNote {
         }
     }
 
-    pub fn compute_note_hash(self) -> Field {
+    fn compute_note_content_hash(self) -> Field {
         // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash([
-            self.amount,
-            self.secret_hash,
-        ],0)
+        pedersen_hash(self.serialize_content(), 0)
     }
 
-    pub fn compute_nullifier(self, _context: &mut PrivateContext) -> Field {
+    fn compute_nullifier(self, _context: &mut PrivateContext) -> Field {
         self.compute_nullifier_without_context()
     }
 
-    pub fn compute_nullifier_without_context(self) -> Field {
-        // TODO(#1386): should use `compute_note_hash_for_read_or_nullify` once public functions inject nonce!
-        let siloed_note_hash = compute_siloed_note_hash(TransparentNoteMethods, self);
+    fn compute_nullifier_without_context(self) -> Field {
+        let siloed_note_hash = compute_note_hash_for_consumption(self);
+
         // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash([self.secret, siloed_note_hash], 0)
+        pedersen_hash([self.secret, siloed_note_hash],0)
     }
 
-    pub fn set_header(&mut self, header: NoteHeader) {
+    fn set_header(&mut self, header: NoteHeader) {
         self.header = header;
     }
 
+    fn get_header(self) -> NoteHeader {
+        self.header
+    }
+
+    fn broadcast(self, context: &mut PrivateContext, slot: Field) {
+        assert(false, "TransparentNote does not support broadcast");
+    }
+
+    fn get_note_type_id() -> Field {
+        // TODO(#4519): autogenerate
+        // python -c "print(int(''.join(str(ord(c)) for c in 'TransparentNote')))"
+        84114971101151129711410111011678111116101
+    }
+}
+
+impl TransparentNote {
+
+    // CONSTRUCTORS
+
+    pub fn new(amount: Field, secret_hash: Field) -> Self {
+        TransparentNote { amount, secret_hash, secret: 0, header: NoteHeader::empty() }
+    }
+
+    // new oracle call primitive
+    // get me the secret corresponding to this hash
+    pub fn new_from_secret(amount: Field, secret: Field) -> Self {
+        TransparentNote { amount, secret_hash: compute_secret_hash(secret), secret, header: NoteHeader::empty() }
+    }
 
     // CUSTOM FUNCTIONS FOR THIS NOTE TYPE
 
@@ -93,47 +92,4 @@ impl TransparentNote {
         assert(self.secret_hash == hash);
     }
 }
-
-fn deserialize(serialized_note: [Field; TRANSPARENT_NOTE_LEN]) -> TransparentNote {
-    TransparentNote::deserialize(serialized_note)
-}
-
-fn serialize(note: TransparentNote) -> [Field; TRANSPARENT_NOTE_LEN] {
-    note.serialize()
-}
-
-fn compute_note_hash(note: TransparentNote) -> Field {
-    note.compute_note_hash()
-}
-
-fn compute_nullifier(note: TransparentNote, context: &mut PrivateContext) -> Field {
-    note.compute_nullifier(context)
-}
-
-fn compute_nullifier_without_context(note: TransparentNote) -> Field {
-    note.compute_nullifier_without_context()
-}
-
-fn get_header(note: TransparentNote) -> NoteHeader {
-    note.header
-}
-
-fn set_header(note: &mut TransparentNote, header: NoteHeader) {
-    note.set_header(header)
-}
-
-fn broadcast(context: &mut PrivateContext, slot: Field, note: TransparentNote) {
-    assert(false, "TransparentNote does not support broadcast");
-}
-
-global TransparentNoteMethods = NoteInterface {
-    deserialize,
-    serialize,
-    compute_note_hash,
-    compute_nullifier,
-    compute_nullifier_without_context,
-    get_header,
-    set_header,
-    broadcast,
-};
 // docs:end:token_types_all
