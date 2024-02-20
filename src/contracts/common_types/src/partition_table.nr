@@ -39,16 +39,28 @@ impl PartitionTable {
         Self { shield_ids, attestations, max_block_number: 0, is_table_cleared: false }
     }
 
-    pub fn join(self, other: PartitionTable) -> Self {
-        Self {
-            shield_ids: self.shield_ids.or(other.shield_ids),
-            attestations: self.attestations.and(other.attestations),
-            max_block_number: if self.max_block_number > other.max_block_number {
-                self.max_block_number
-            } else {
-                other.max_block_number
-            },
-            is_table_cleared: self.is_table_cleared & other.is_table_cleared
+    pub fn is_empty(self) -> bool {
+        self.shield_ids.is_empty() & self.attestations.is_empty()
+    }
+
+    pub fn join(self, other: Self) -> Self {
+        if self.is_empty() {
+            other
+            // TODO: Getting this error
+            //       cli ERROR PayloadTooLargeError: request entity too large
+            // } else if other.is_empty() {
+            //     self
+        } else {
+            Self {
+                shield_ids: self.shield_ids.or(other.shield_ids),
+                attestations: self.attestations.and(other.attestations),
+                max_block_number: if self.max_block_number > other.max_block_number {
+                    self.max_block_number
+                } else {
+                    other.max_block_number
+                },
+                is_table_cleared: self.is_table_cleared & other.is_table_cleared
+            }
         }
     }
 

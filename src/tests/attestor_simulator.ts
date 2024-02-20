@@ -1,6 +1,7 @@
 import { AztecAddress } from '@aztec/aztec.js';
 import { Fr } from '@aztec/foundation/fields';
 import { newTree, SparseTree, Pedersen } from '@aztec/merkle-tree';
+import { openTmpStore } from '@aztec/kv-store/utils';
 import { default as levelup } from 'levelup';
 import { type MemDown, default as memdown } from 'memdown';
 
@@ -16,7 +17,8 @@ export class AttestorSimulator {
   constructor() { }
   
   async initializeTokenBlacklist(token: AztecAddress) {
-    await this.blacklist.set(token, await newTree(SparseTree, levelup(createMemDown()), new Pedersen(), "attestor", DEPTH));
+    const db = openTmpStore();
+    await this.blacklist.set(token, await newTree(SparseTree, db, new Pedersen(), "attestor", DEPTH));
   }
 
   public async addToBlacklist(token: AztecAddress, shieldId: bigint) {
@@ -34,7 +36,15 @@ export class AttestorSimulator {
     if (!this.blacklist.has(token)) {
       await this.initializeTokenBlacklist(token);
     }
-    return (await this.blacklist.get(token)!.getSiblingPath(shieldId, true))!.toFieldArray();
+    return (await this.blacklist.get(token)!.getSiblingPath(shieldId, true))!.toFields();
+  }
+
+  public async getSiblingPaths(token: AztecAddress, shieldIds: bigint[]) {
+    let proofs = [];
+    for (const shieldId of shieldIds) {
+      proofs.push(await this.getSiblingPath(token, shieldId));
+    }
+    return proofs;
   }
 
   public async getRoot(token: AztecAddress) {

@@ -174,8 +174,12 @@ impl<T> BalancesMap<T> {
         // without it minuend-subtrahend would still catch it, but more generic error then.
         // without the == true, it includes 'minuend.ge(subtrahend)' as part of the error.
         assert(minuend.ge(subtrahend) == true, "Balance too low");
-
+        // TODO: Getting this error with the following lines
+        //       entered unreachable code: Cannot flatten a dynamic array
+        // let diff = minuend.sub(subtrahend);
+        // if diff.gt(SafeU120::min()) {
         self.add(owner, minuend.sub(subtrahend), pt2);
+        // }
 
         pt1
     }
@@ -204,9 +208,13 @@ pub fn filter_notes_unattested<T, T_SERIALIZED_LEN>(
     let mut selected = [Option::none(); MAX_READ_REQUESTS_PER_CALL];
     for i in 0..notes.len() {
         if notes[i].is_some() {
-            let attestations = notes[i].unwrap_unchecked().get_partition_table().attestations;
-            if !attestations.contains(attestor.to_field()) {
-                selected[i] = notes[i];
+            let note = notes[i].unwrap_unchecked();
+            // TODO: Ideally notes wouldn't contain empty notes
+            if note.get_amount().gt(SafeU120::min()) {
+                let attestations = notes[i].unwrap_unchecked().get_partition_table().attestations;
+                if !attestations.contains(attestor.to_field()) {
+                    selected[i] = notes[i];
+                }
             }
         }
     }

@@ -42,7 +42,7 @@ contract Token {
     };
     // docs:end:import_authwit
 
-    use dep::common_types::{partition_table::PartitionTable};
+    use dep::common_types::{partition_table::{PartitionTable, BOUNDED_VEC_LEN}};
 
     use crate::interfaces::Attestor::AttestorPrivateContextInterface as Attestor;
     use crate::types::{
@@ -340,7 +340,7 @@ contract Token {
         from: AztecAddress,
         attestor: AztecAddress,
         blacklist_root: Field,
-        proof: [Field; DEPTH],
+        proofs: [Field; DEPTH * BOUNDED_VEC_LEN],
         nonce: Field
     ) {
         if (!from.eq(context.msg_sender())) {
@@ -353,7 +353,7 @@ contract Token {
         if maybe_note.is_some() {
             let note = maybe_note.unwrap_unchecked();
 
-            let attested = Attestor::at(attestor).request_attestation(&mut context, note.partition_table, blacklist_root, proof)[0] as bool;
+            let attested = Attestor::at(attestor).request_attestation(&mut context, note.partition_table, blacklist_root, proofs)[0] as bool;
             if attested {
                 storage.balances.add_attestation(from, note, attestor);
             }

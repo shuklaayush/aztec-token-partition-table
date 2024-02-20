@@ -4,6 +4,7 @@ import { TokenContract } from '../artifacts/Token.js';
 import { TokenSimulator } from './token_simulator.js';
 import {
   AccountWallet,
+  AztecAddress,
   CompleteAddress,
   DebugLogger,
   ExtendedNote,
@@ -12,16 +13,22 @@ import {
   PXE,
   TxHash,
   TxStatus,
+  Wallet,
   computeAuthWitMessageHash,
   computeMessageSecretHash,
   createDebugLogger,
 } from '@aztec/aztec.js';
-import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
-import { afterEach, beforeAll, expect, jest } from '@jest/globals';
 
+import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
+
+import { afterEach, beforeAll, expect, jest } from '@jest/globals';
 import { setupEnvironment } from '../environment/index.js';
 
 const TIMEOUT = 60_000;
+const VEC_LEN = 10;
+const TOKEN_NAME = 'Aztec Token';
+const TOKEN_SYMBOL = 'AZT';
+const TOKEN_DECIMALS = 18n;
 
 describe('e2e_token_contract', () => {
   jest.setTimeout(TIMEOUT);
@@ -39,8 +46,16 @@ describe('e2e_token_contract', () => {
 
   const addPendingShieldNoteToPXE = async (accountIndex: number, amount: bigint, secretHash: Fr, txHash: TxHash) => {
     const storageSlot = new Fr(5); // The storage slot of `pending_shields` is 5.
+    const noteTypeId = new Fr(84114971101151129711410111011678111116101n); // TransparentNote
     const note = new Note([new Fr(amount), secretHash]);
-    const extendedNote = new ExtendedNote(note, accounts[accountIndex].address, asset.address, storageSlot, txHash);
+    const extendedNote = new ExtendedNote(
+      note,
+      accounts[accountIndex].address,
+      asset.address,
+      storageSlot,
+      noteTypeId,
+      txHash,
+    );
     await wallets[accountIndex].addNote(extendedNote);
   };
 
@@ -962,10 +977,17 @@ describe('e2e_token_contract', () => {
   describe('Attestations', () => {
     const secret = Fr.random();
     const amount = 10000n;
+    const shieldId = 0n;
+    let token: AztecAddress;
     let secretHash: Fr;
     let txHash: TxHash;
 
+    let shieldIds = Array(VEC_LEN).fill(0n);
+    shieldIds[0] = shieldId;
+
     beforeAll(async () => {
+      token = asset.address;
+
       secretHash = computeMessageSecretHash(secret);
       const tx = asset.methods.mint_private(amount, secretHash).send();
       const receipt = await tx.wait();
@@ -990,69 +1012,176 @@ describe('e2e_token_contract', () => {
     });
 
     it('Request attestation', async () => {
-      let shieldId = 0n;
-
       let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
-      const proof = await attestorSim.getSiblingPath(accounts[0].address, shieldId);
+      const proofs = await attestorSim.getSiblingPaths(accounts[0].address, shieldIds);
 
-      const txClaim = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proof, 0).send();
-      const receiptClaim = await txClaim.wait();
-      expect(receiptClaim.status).toBe(TxStatus.MINED);
+      const tx = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0).send();
+      const receipt = await tx.wait();
+      expect(receipt.status).toBe(TxStatus.MINED);
 
       expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(true);
     });
 
-    it('Attestation transfer', async () => {
-      let shieldId = 0n;
+    describe('Partial transfers', () => {
+      let account1: AztecAddress;
+      let account2: AztecAddress;
+      let wallet1: Wallet;
+      let wallet2: Wallet;
 
-      let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
-      const proof = await attestorSim.getSiblingPath(accounts[0].address, shieldId);
+      beforeEach(async () => {
+        asset = await TokenContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        logger(`Token deployed to ${asset.address}`);
+        tokenSim = new TokenSimulator(
+          asset,
+          logger,
+          accounts.map(a => a.address),
+        );
+        expect(await asset.methods.admin().view()).toBe(accounts[0].address.toBigInt());
+        token = asset.address;
 
-      const txClaim = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proof, 0).send();
-      const receiptClaim = await txClaim.wait();
-      expect(receiptClaim.status).toBe(TxStatus.MINED);
+        secretHash = computeMessageSecretHash(secret);
+        const tx = asset.methods.mint_private(amount, secretHash).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
 
-      expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(true);
-      expect(await asset.methods.has_attestation(accounts[1].address, attestor.address).view()).toBe(false);
+        tokenSim.mintPrivate(amount);
+        txHash = receipt.txHash;
+        await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-      const balance0 = await asset.methods.balance_of_private(accounts[0].address).view();
-      const amount = balance0 / 2n;
-      expect(amount).toBeGreaterThan(0n);
-      const tx = asset.methods.transfer(accounts[0].address, accounts[1].address, amount, 0).send();
-      const receipt = await tx.wait();
-      expect(receipt.status).toBe(TxStatus.MINED);
-      tokenSim.transferPrivate(accounts[0].address, accounts[1].address, amount);
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+        const receipt2 = await tx2.wait();
+        expect(receipt2.status).toBe(TxStatus.MINED);
+        tokenSim.redeemShield(accounts[0].address, amount);
+
+        attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        logger(`Attestor deployed to ${attestor.address}`);
+        attestorSim = new AttestorSimulator();
+
+        account1 = accounts[0].address;
+        account2 = accounts[1].address;
+        wallet1 = wallets[0];
+        wallet2 = wallets[1];
+      }, 100_000);
+
+      it('Attestation transfer', async () => {
+        let root = await attestor.methods.get_blacklist_root(token).view();
+        const proofs = await attestorSim.getSiblingPaths(accounts[0].address, shieldIds);
+
+        const tx1 = asset.withWallet(wallet1).methods.request_attestation(account1, attestor.address, root, proofs.flat(), 0).send();
+        const receipt1 = await tx1.wait();
+        expect(receipt1.status).toBe(TxStatus.MINED);
+
+        expect(await asset.methods.has_attestation(account1, attestor.address).view()).toBe(true);
+        expect(await asset.methods.has_attestation(account2, attestor.address).view()).toBe(false);
+
+        const balance0 = await asset.methods.balance_of_private(account1).view();
+        const amount = balance0 / 2n;
+        expect(amount).toBeGreaterThan(0n);
+        const tx = asset.withWallet(wallet1).methods.transfer(account1, account2, amount, 0).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
+        tokenSim.transferPrivate(account1, account2, amount);
       
-      expect(await asset.methods.has_attestation(accounts[1].address, attestor.address).view()).toBe(true);
+        expect(await asset.methods.has_attestation(account1, attestor.address).view()).toBe(true);
+        expect(await asset.methods.has_attestation(account2, attestor.address).view()).toBe(true);
+      });
+
+      it('Deposit ID transfer', async () => {
+        const proof1 = await attestorSim.getSiblingPath(token, shieldId);
+        expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof1).view()).toEqual(true);
+
+        const tx1 = attestor.methods.add_to_blacklist(token, shieldId, proof1).send();
+        const receipt1 = await tx1.wait();
+        expect(receipt1.status).toBe(TxStatus.MINED);
+        await attestorSim.addToBlacklist(token, shieldId);
+
+        const root2 = await attestorSim.getRoot(token);
+        const proof2 = await attestorSim.getSiblingPath(token, shieldId);
+        expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof2).view()).toEqual(false);
+
+        const balance0 = await asset.methods.balance_of_private(account1).view();
+        const amount = balance0 / 2n;
+        expect(amount).toBeGreaterThan(0n);
+        const tx = asset.withWallet(wallet1).methods.transfer(account1, account2, amount, 0).send();
+        const receipt2 = await tx.wait();
+        expect(receipt2.status).toBe(TxStatus.MINED);
+        tokenSim.transferPrivate(account1, account2, amount);
+        
+        // const tx4 = asset.withWallet(wallet1).methods.request_attestation(account1, attestor.address, root2, proof2, 0).send();
+
+        // Request attestation should fail i.e. not add any attestation
+        const proofs = await attestorSim.getSiblingPaths(account1, shieldIds);
+        const tx3 = asset.withWallet(wallet2).methods.request_attestation(account2, attestor.address, root2, proofs.flat(), 0).send();
+        const receipt3 = await tx3.wait();
+        expect(receipt3.status).toBe(TxStatus.MINED);
+
+        expect(await asset.methods.has_attestation(account2, attestor.address).view()).toBe(false);
+      });
     });
 
-    it('Deposit ID transfer', async () => {
-      let shieldId = 0n;
-      let token = asset.address;
+    describe('Full transfers', () => {
+      let account1: AztecAddress;
+      let account2: AztecAddress;
+      let wallet1: Wallet;
+      let wallet2: Wallet;
 
-      const proof = await attestorSim.getSiblingPath(token, shieldId);
-      const tx1 = attestor.methods.add_to_blacklist(token, shieldId, proof).send();
-      const receipt1 = await tx1.wait();
-      expect(receipt1.status).toBe(TxStatus.MINED);
-      await attestorSim.addToBlacklist(token, shieldId);
+      beforeEach(async () => {
+        asset = await TokenContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        logger(`Token deployed to ${asset.address}`);
+        tokenSim = new TokenSimulator(
+          asset,
+          logger,
+          accounts.map(a => a.address),
+        );
+        expect(await asset.methods.admin().view()).toBe(accounts[0].address.toBigInt());
+        token = asset.address;
 
-      expect(await attestor.methods.is_not_blacklisted(asset, shieldId, proof).view()).toEqual(false);
+        secretHash = computeMessageSecretHash(secret);
+        const tx = asset.methods.mint_private(amount, secretHash).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
 
-      const balance0 = await asset.methods.balance_of_private(accounts[0].address).view();
-      const amount = balance0 / 2n;
-      expect(amount).toBeGreaterThan(0n);
-      const tx = asset.methods.transfer(accounts[0].address, accounts[1].address, amount, 0).send();
-      const receipt = await tx.wait();
-      expect(receipt.status).toBe(TxStatus.MINED);
-      tokenSim.transferPrivate(accounts[0].address, accounts[1].address, amount);
+        tokenSim.mintPrivate(amount);
+        txHash = receipt.txHash;
+        await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
+
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+        const receipt2 = await tx2.wait();
+        expect(receipt2.status).toBe(TxStatus.MINED);
+        tokenSim.redeemShield(accounts[0].address, amount);
+
+        attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        logger(`Attestor deployed to ${attestor.address}`);
+        attestorSim = new AttestorSimulator();
+
+        account1 = accounts[0].address;
+        account2 = accounts[1].address;
+        wallet1 = wallets[0];
+        wallet2 = wallets[1];
+      }, 100_000);
+
+      it('Attestation transfer', async () => {
+        let root = await attestor.methods.get_blacklist_root(token).view();
+        const proofs = await attestorSim.getSiblingPaths(token, shieldIds);
+
+        const tx1 = asset.withWallet(wallet1).methods.request_attestation(account1, attestor.address, root, proofs.flat(), 0).send();
+        const receipt1 = await tx1.wait();
+        expect(receipt1.status).toBe(TxStatus.MINED);
+
+        expect(await asset.methods.has_attestation(account1, attestor.address).view()).toBe(true);
+        expect(await asset.methods.has_attestation(account2, attestor.address).view()).toBe(false);
+
+        const balance0 = await asset.methods.balance_of_private(account1).view();
+        const amount = balance0;
+        expect(amount).toBeGreaterThan(0n);
+        const tx = asset.withWallet(wallet1).methods.transfer(account1, account2, amount, 0).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
+        tokenSim.transferPrivate(account1, account2, amount);
       
-      // Request attestation should fail i.e. not add any attestation
-      const root = await attestorSim.getRoot(token);
-      const txClaim = asset.methods.request_attestation(accounts[1].address, attestor.address, root, proof, 0).send();
-      const receiptClaim = await txClaim.wait();
-      expect(receiptClaim.status).toBe(TxStatus.MINED);
-
-      expect(await asset.methods.has_attestation(accounts[1].address, attestor.address).view()).toBe(false);
+        expect(await asset.methods.has_attestation(account1, attestor.address).view()).toBe(false);
+        expect(await asset.methods.has_attestation(account2, attestor.address).view()).toBe(true);
+      });
     });
   });
 });

@@ -18,7 +18,7 @@ contract Attestor {
         note::{note_header::NoteHeader, utils as note_utils},
         state_vars::{map::Map, public_state::PublicState}
     };
-    use dep::common_types::{smt, partition_table::PartitionTable};
+    use dep::common_types::{smt, partition_table::{PartitionTable, BOUNDED_VEC_LEN}};
 
     ////////////////////////////////////////////////////////////////////////////////
     // CONSTANTS
@@ -87,7 +87,7 @@ contract Attestor {
     fn request_attestation(
         partition_table: PartitionTable,
         blacklist_root: Field,
-        proof: [Field; DEPTH]
+        proofs: [Field; DEPTH * BOUNDED_VEC_LEN]
     ) -> bool {
         let token = context.msg_sender();
 
@@ -101,7 +101,11 @@ contract Attestor {
 
         let shield_ids = partition_table.shield_ids.elems;
         let mut res = true;
+        let mut proof = [0; DEPTH];
         for i in 0..shield_ids.len() {
+            for j in 0..DEPTH {
+                proof[j] = proofs[i * DEPTH + j];
+            }
             if !smt::verify(shield_ids[i], blacklist_root, proof) {
                 res = false;
             }

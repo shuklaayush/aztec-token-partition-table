@@ -24,6 +24,10 @@ impl<MAX_LEN, SERIALIZED_LEN> BoundedVec2<MAX_LEN, SERIALIZED_LEN> {
         MAX_LEN
     }
 
+    pub fn is_empty(self) -> bool {
+        self.len == 0
+    }
+
     pub fn at(self, index: u64) -> Field {
         // assert(index < self.len, "index out of bounds");
         self.elems[index]
