@@ -360,14 +360,6 @@ contract Token {
         }
     }
 
-    // #[aztec(private)]
-    // fn has_attestation(attestor: AztecAddress) -> bool {
-    //     let from = context.msg_sender();
-
-    //     let note = storage.balances.last_unattested_note(from, attestor);
-    //     note.is_none()
-    // }
-
     // docs:start:initialize
     #[aztec(public)]
     internal fn _initialize(

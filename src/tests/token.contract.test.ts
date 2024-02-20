@@ -985,41 +985,73 @@ describe('e2e_token_contract', () => {
     let shieldIds = Array(VEC_LEN).fill(0n);
     shieldIds[0] = shieldId;
 
-    beforeAll(async () => {
-      token = asset.address;
+    describe('No transfers', () => {
+      beforeEach(async () => {
+        asset = await TokenContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        logger(`Token deployed to ${asset.address}`);
+        tokenSim = new TokenSimulator(
+          asset,
+          logger,
+          accounts.map(a => a.address),
+        );
+        expect(await asset.methods.admin().view()).toBe(accounts[0].address.toBigInt());
+        token = asset.address;
 
-      secretHash = computeMessageSecretHash(secret);
-      const tx = asset.methods.mint_private(amount, secretHash).send();
-      const receipt = await tx.wait();
-      expect(receipt.status).toBe(TxStatus.MINED);
+        secretHash = computeMessageSecretHash(secret);
+        const tx = asset.methods.mint_private(amount, secretHash).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
 
-      tokenSim.mintPrivate(amount);
-      txHash = receipt.txHash;
-      await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
+        tokenSim.mintPrivate(amount);
+        txHash = receipt.txHash;
+        await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
-      const receiptClaim = await txClaim.wait();
-      expect(receiptClaim.status).toBe(TxStatus.MINED);
-      tokenSim.redeemShield(accounts[0].address, amount);
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+        const receipt2 = await tx2.wait();
+        expect(receipt2.status).toBe(TxStatus.MINED);
+        tokenSim.redeemShield(accounts[0].address, amount);
 
-      attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
-      logger(`Attestor deployed to ${attestor.address}`);
-      attestorSim = new AttestorSimulator();
-    }, 100_000);
+        attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
+        logger(`Attestor deployed to ${attestor.address}`);
+        attestorSim = new AttestorSimulator();
+      }, 100_000);
 
-    it('Has attestation', async () => {
-      expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(false);
-    });
+      it('Has attestation', async () => {
+        expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(false);
+      });
 
-    it('Request attestation', async () => {
-      let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
-      const proofs = await attestorSim.getSiblingPaths(accounts[0].address, shieldIds);
+      it('Request attestation', async () => {
+        let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
+        const proofs = await attestorSim.getSiblingPaths(token, shieldIds);
 
-      const tx = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0).send();
-      const receipt = await tx.wait();
-      expect(receipt.status).toBe(TxStatus.MINED);
+        const tx = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
 
-      expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(true);
+        expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(true);
+      });
+
+      it('Request attestation after blacklisting', async () => {
+        const proof1 = await attestorSim.getSiblingPath(token, shieldId);
+        expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof1).view()).toEqual(true);
+
+        const tx1 = attestor.methods.add_to_blacklist(token, shieldId, proof1).send();
+        const receipt1 = await tx1.wait();
+        expect(receipt1.status).toBe(TxStatus.MINED);
+        await attestorSim.addToBlacklist(token, shieldId);
+
+        const proof2 = await attestorSim.getSiblingPath(token, shieldId);
+        expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof2).view()).toEqual(false);
+
+        let root = await attestor.methods.get_blacklist_root(token).view();
+        const proofs = await attestorSim.getSiblingPaths(token, shieldIds);
+
+        const tx = asset.methods.request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0).send();
+        const receipt = await tx.wait();
+        expect(receipt.status).toBe(TxStatus.MINED);
+
+        expect(await asset.methods.has_attestation(accounts[0].address, attestor.address).view()).toBe(false);
+      });
     });
 
     describe('Partial transfers', () => {
@@ -1065,7 +1097,7 @@ describe('e2e_token_contract', () => {
 
       it('Attestation transfer', async () => {
         let root = await attestor.methods.get_blacklist_root(token).view();
-        const proofs = await attestorSim.getSiblingPaths(accounts[0].address, shieldIds);
+        const proofs = await attestorSim.getSiblingPaths(token, shieldIds);
 
         const tx1 = asset.withWallet(wallet1).methods.request_attestation(account1, attestor.address, root, proofs.flat(), 0).send();
         const receipt1 = await tx1.wait();
@@ -1095,7 +1127,7 @@ describe('e2e_token_contract', () => {
         expect(receipt1.status).toBe(TxStatus.MINED);
         await attestorSim.addToBlacklist(token, shieldId);
 
-        const root2 = await attestorSim.getRoot(token);
+        let root2 = await attestor.methods.get_blacklist_root(token).view();
         const proof2 = await attestorSim.getSiblingPath(token, shieldId);
         expect(await attestor.methods.is_not_blacklisted(token, shieldId, proof2).view()).toEqual(false);
 
@@ -1110,7 +1142,7 @@ describe('e2e_token_contract', () => {
         // const tx4 = asset.withWallet(wallet1).methods.request_attestation(account1, attestor.address, root2, proof2, 0).send();
 
         // Request attestation should fail i.e. not add any attestation
-        const proofs = await attestorSim.getSiblingPaths(account1, shieldIds);
+        const proofs = await attestorSim.getSiblingPaths(token, shieldIds);
         const tx3 = asset.withWallet(wallet2).methods.request_attestation(account2, attestor.address, root2, proofs.flat(), 0).send();
         const receipt3 = await tx3.wait();
         expect(receipt3.status).toBe(TxStatus.MINED);
