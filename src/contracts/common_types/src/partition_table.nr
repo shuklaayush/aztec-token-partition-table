@@ -2,8 +2,8 @@ use dep::std::default::Default;
 
 use crate::bounded_vec2::BoundedVec2;
 
-global BOUNDED_VEC_LEN: Field = 10;
-global PARTITION_TABLE_LEN: Field = 24;
+global BOUNDED_VEC_LEN: u64 = 10;
+global PARTITION_TABLE_LEN: u64 = 24;
 
 // struct Shield {
 //     shield_id: Field,
@@ -37,6 +37,12 @@ impl PartitionTable {
         attestations: BoundedVec2<BOUNDED_VEC_LEN, BOUNDED_VEC_LEN + 1>
     ) -> Self {
         Self { shield_ids, attestations, max_block_number: 0, is_table_cleared: false }
+    }
+
+    pub fn with_single_shield_id(shield_id: Field) -> Self {
+        let mut shield_ids = BoundedVec2::default();
+        shield_ids.push(shield_id);
+        Self { shield_ids, attestations: BoundedVec2::default(), max_block_number: 0, is_table_cleared: false }
     }
 
     pub fn is_empty(self) -> bool {

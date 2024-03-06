@@ -34,12 +34,12 @@
     "rootDir": "./src"
   },
   "dependencies": {
-    "@aztec/accounts": "0.24.0",
-    "@aztec/aztec.js": "0.24.0",
-    "@aztec/circuits.js": "0.24.0",
-    "@aztec/foundation": "0.24.0",
-    "@aztec/merkle-tree": "0.24.0",
-    "@aztec/types": "0.24.0"
+    "@aztec/accounts": "0.26.3",
+    "@aztec/aztec.js": "0.26.3",
+    "@aztec/circuits.js": "0.26.3",
+    "@aztec/foundation": "0.26.3",
+    "@aztec/merkle-tree": "0.26.3",
+    "@aztec/types": "0.26.3"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",

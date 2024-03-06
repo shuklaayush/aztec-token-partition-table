@@ -12,19 +12,15 @@ contract Attestor {
     // IMPORTS
     ////////////////////////////////////////////////////////////////////////////////
 
-    use dep::aztec::{
-        protocol_types::{abis::function_selector::FunctionSelector, address::AztecAddress},
-        log::emit_unencrypted_log, context::Context,
-        note::{note_header::NoteHeader, utils as note_utils},
-        state_vars::{map::Map, public_state::PublicState}
-    };
+    use dep::aztec::prelude::{emit_unencrypted_log, NoteHeader, Map, PublicMutable, SharedImmutable, FunctionSelector, AztecAddress};
+
     use dep::common_types::{smt, partition_table::{PartitionTable, BOUNDED_VEC_LEN}};
 
     ////////////////////////////////////////////////////////////////////////////////
     // CONSTANTS
     ////////////////////////////////////////////////////////////////////////////////
 
-    global DEPTH: Field = 32;
+    global DEPTH: u64 = 32;
     global EMPTY_ROOT: Field = 0x16642d9ccd8346c403aa4c3fa451178b22534a27035cdaa6ec34ae53b29c50cb;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -32,18 +28,19 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     struct Storage {
-        admin: PublicState<AztecAddress>,
-        blacklists: Map<AztecAddress, PublicState<Field>>,
+        admin: PublicMutable<AztecAddress>,
+        blacklists: Map<AztecAddress, PublicMutable<Field>>,
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTOR
     ////////////////////////////////////////////////////////////////////////////////
 
-    #[aztec(private)]
+    #[aztec(public)]
+    #[aztec(initializer)]
     fn constructor(admin: AztecAddress) {
-        let selector = FunctionSelector::from_signature("_initialize((Field))");
-        context.call_public_function(context.this_address(), selector, [admin.to_field()]);
+        assert(!admin.is_zero(), "invalid admin");
+        storage.admin.write(admin);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -118,12 +115,8 @@ contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
 
     #[aztec(public)]
-    internal fn _initialize(new_admin: AztecAddress) {
-        storage.admin.write(new_admin);
-    }
-
-    #[aztec(public)]
-    internal fn _assert_blacklist_root(token: AztecAddress, rhs: Field) {
+    #[aztec(internal)]
+    fn _assert_blacklist_root(token: AztecAddress, rhs: Field) {
         let mut lhs = storage.blacklists.at(token).read();
         if lhs == 0 {
             lhs = EMPTY_ROOT;
@@ -153,15 +146,5 @@ contract Attestor {
             root = EMPTY_ROOT;
         }
         smt::verify(shield_id, root, proof)
-    }
-
-    unconstrained fn compute_note_hash_and_nullifier(
-        _contract_address: AztecAddress,
-        _nonce: Field,
-        _storage_slot: Field,
-        _note_type_id: Field,
-        _serialized_note: [Field; 0]
-    ) -> pub [Field; 4] {
-        [0; 4]
     }
 }

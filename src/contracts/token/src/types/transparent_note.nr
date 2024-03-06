@@ -1,8 +1,6 @@
 // docs:start:token_types_all
-use dep::aztec::{
-    note::{note_header::NoteHeader, note_interface::NoteInterface, utils::compute_note_hash_for_consumption},
-    hash::{compute_secret_hash, pedersen_hash}, context::PrivateContext
-};
+use dep::aztec::prelude::{NoteHeader, NoteInterface, PrivateContext};
+use dep::aztec::{note::{utils::compute_note_hash_for_consumption}, hash::{compute_secret_hash, pedersen_hash}};
 
 global TRANSPARENT_NOTE_LEN: Field = 2;
 
@@ -42,7 +40,6 @@ impl NoteInterface<TRANSPARENT_NOTE_LEN> for TransparentNote {
 
     fn compute_nullifier_without_context(self) -> Field {
         let siloed_note_hash = compute_note_hash_for_consumption(self);
-
         // TODO(#1205) Should use a non-zero generator index.
         pedersen_hash([self.secret, siloed_note_hash],0)
     }

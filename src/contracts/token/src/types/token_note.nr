@@ -1,16 +1,14 @@
-use dep::aztec::{
-    protocol_types::{address::AztecAddress, constants::MAX_READ_REQUESTS_PER_CALL},
-    note::{note_header::NoteHeader, note_interface::NoteInterface, utils::compute_note_hash_for_consumption},
-    context::PrivateContext, state_vars::set::Set, log::emit_encrypted_log, hash::pedersen_hash
+use dep::aztec::prelude::{
+    AztecAddress, NoteInterface, NoteGetterOptions, NoteViewerOptions, NoteHeader, PrivateContext,
+    PrivateSet, Map, emit_encrypted_log
 };
+use dep::aztec::{note::utils::compute_note_hash_for_consumption, hash::pedersen_hash};
 use dep::aztec::oracle::{rand::rand, nullifier_key::get_nullifier_secret_key, get_public_key::get_public_key};
-use dep::safe_math::SafeU120;
-use dep::std::option::Option;
 use dep::common_types::partition_table::{PartitionTable, PARTITION_TABLE_LEN};
 
 trait OwnedNote {
-    fn new(amount: SafeU120, owner: AztecAddress, partition_table: PartitionTable) -> Self;
-    fn get_amount(self) -> SafeU120;
+    fn new(amount: U128, owner: AztecAddress, partition_table: PartitionTable) -> Self;
+    fn get_amount(self) -> U128;
     fn get_owner(self) -> AztecAddress;
     // TODO: Move to separate trait
     fn get_partition_table(self) -> PartitionTable;
@@ -20,7 +18,7 @@ global TOKEN_NOTE_LEN: Field = 28; // 3 + 24 (PT) plus a header.
 
 struct TokenNote {
     // the amount of tokens in the note
-    amount: SafeU120,
+    amount: U128,
     // the provider of secrets for the nullifier. The owner (recipient) to ensure that the note 
     // can be privately spent. When nullifier secret and encryption private key is same 
     // we can simply use the owner for this one.
@@ -37,7 +35,7 @@ struct TokenNote {
 impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
     fn serialize_content(self) -> [Field; TOKEN_NOTE_LEN] {
         let mut serialized_note = [0; TOKEN_NOTE_LEN];
-        serialized_note[0] = self.amount.value as Field;
+        serialized_note[0] = self.amount.to_field();
         serialized_note[1] = self.owner.to_field();
         serialized_note[2] = self.randomness;
 
@@ -55,7 +53,7 @@ impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
             partition_table_serialized[i] = serialized_note[i + 3];
         }
         Self {
-            amount: SafeU120::new(serialized_note[0]),
+            amount: U128::from_integer(serialized_note[0]),
             owner: AztecAddress::from_field(serialized_note[1]),
             randomness: serialized_note[2],
             partition_table: PartitionTable::deserialize(partition_table_serialized),
@@ -103,7 +101,7 @@ impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
     // Broadcasts the note as an encrypted log on L1.
     fn broadcast(self, context: &mut PrivateContext, slot: Field) {
       // We only bother inserting the note if non-empty to save funds on gas.
-      if !self.amount.is_zero() {
+      if self.amount != U128::from_integer(0) {
           let encryption_pub_key = get_public_key(self.owner);
           emit_encrypted_log(
               context,
@@ -124,7 +122,7 @@ impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
 }
 
 impl OwnedNote for TokenNote {
-    fn new(amount: SafeU120, owner: AztecAddress, partition_table: PartitionTable) -> Self {
+    fn new(amount: U128, owner: AztecAddress, partition_table: PartitionTable) -> Self {
         Self {
             amount,
             owner,
@@ -134,7 +132,7 @@ impl OwnedNote for TokenNote {
         }
     }
 
-    fn get_amount(self) -> SafeU120 {
+    fn get_amount(self) -> U128 {
         self.amount
     }
 

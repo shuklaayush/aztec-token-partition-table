@@ -12,89 +12,70 @@ mod types;
 
 contract Token {
     // Libs
-    use dep::std::option::Option;
 
-    use dep::safe_math::SafeU120;
     // use dep::compressed_string::FieldCompressedString;
 
-    use dep::aztec::{
-        log::emit_unencrypted_log_from_private,
-        note::{
-            note_getter_options::NoteGetterOptions,
-            note_header::NoteHeader,
-            utils as note_utils,
-        },
-        context::{PrivateContext, PublicContext, Context},
-        hash::{compute_secret_hash},
-        state_vars::{map::Map, public_state::PublicState, stable_public_state::StablePublicState, set::Set},
-        protocol_types::{
-            abis::function_selector::FunctionSelector,
-            address::AztecAddress,
-        }
+    use dep::aztec::prelude::{
+        NoteGetterOptions, NoteHeader, Map, PublicMutable, SharedImmutable, PrivateSet,
+        FunctionSelector, AztecAddress
     };
+    // TODO: Emit log from public function and call
+    use dep::aztec::log::emit_unencrypted_log_from_private;
+    use dep::aztec::hash::compute_secret_hash;
 
     // docs:start:import_authwit
-    use dep::authwit::{
-        auth::{
-            assert_current_call_valid_authwit,
-            assert_current_call_valid_authwit_public,
-        },
-    };
+    use dep::authwit::{auth::{assert_current_call_valid_authwit, assert_current_call_valid_authwit_public}};
     // docs:end:import_authwit
 
     use dep::common_types::{partition_table::{PartitionTable, BOUNDED_VEC_LEN}};
 
     use crate::interfaces::Attestor::AttestorPrivateContextInterface as Attestor;
-    use crate::types::{
-        transparent_note::TransparentNote,
-        token_note::{TokenNote, TOKEN_NOTE_LEN},
-        balances_map::BalancesMap
-    };
+    use crate::types::{transparent_note::TransparentNote, token_note::{TokenNote, TOKEN_NOTE_LEN}, balances_map::BalancesMap};
     // docs:end::imports
 
     // TODO: Move to a common crate
-    global DEPTH: Field = 32;
+    global DEPTH: u64 = 32;
 
     // docs:start:storage_struct
     struct Storage {
         // docs:start:storage_admin
-        admin: PublicState<AztecAddress>,
+        admin: PublicMutable<AztecAddress>,
         // docs:end:storage_admin
         // docs:start:storage_minters
-        minters: Map<AztecAddress, PublicState<bool>>,
+        minters: Map<AztecAddress, PublicMutable<bool>>,
         // docs:end:storage_minters
         // docs:start:storage_balances
         balances: BalancesMap<TokenNote>,
         // docs:end:storage_balances
-        total_supply: PublicState<SafeU120>,
+        total_supply: PublicMutable<U128>,
         // docs:start:storage_pending_shields
-        pending_shields: Set<TransparentNote>,
+        pending_shields: PrivateSet<TransparentNote>,
         // docs:end:storage_pending_shields
-        public_balances: Map<AztecAddress, PublicState<SafeU120>>,
-        // symbol: StablePublicState<FieldCompressedString>,
-        // name: StablePublicState<FieldCompressedString>,
+        public_balances: Map<AztecAddress, PublicMutable<U128>>,
+        // symbol: SharedImmutable<FieldCompressedString>,
+        // name: SharedImmutable<FieldCompressedString>,
         // docs:start:storage_decimals
-        // decimals: StablePublicState<u8>,
+        // decimals: SharedImmutable<u8>,
         // docs:end:storage_decimals
         // total number of shielded notes
-        num_shields: PublicState<u32>,
+        // numShields from spec
+        note_counter: PublicMutable<u32>,
     }
     // docs:end:storage_struct
 
     // docs:start:constructor
-    #[aztec(private)]
+    #[aztec(public)]
+    #[aztec(initializer)]
     // fn constructor(admin: AztecAddress, name: str<31>, symbol: str<31>, decimals: u8) {
     fn constructor(admin: AztecAddress) {
-        // let selector = FunctionSelector::from_signature("_initialize((Field),(Field),(Field),u8)");
-        // let name_s = FieldCompressedString::from_string(name);
-        // let symbol_s = FieldCompressedString::from_string(symbol);
-        let selector = FunctionSelector::from_signature("_initialize((Field))");
-        context.call_public_function(
-            context.this_address(),
-            selector,
-            // [admin.to_field(), name_s.serialize()[0], symbol_s.serialize()[0], decimals as Field]
-            [admin.to_field()]
-        );
+        assert(!admin.is_zero(), "invalid admin");
+        storage.admin.write(admin);
+        storage.minters.at(admin).write(true);
+        // storage.name.initialize(FieldCompressedString::from_string(name));
+        // storage.symbol.initialize(FieldCompressedString::from_string(symbol));
+        // docs:start:initialize_decimals
+        // storage.decimals.initialize(decimals);
+        // docs:end:initialize_decimals
     }
     // docs:end:constructor
 
@@ -172,7 +153,7 @@ contract Token {
         // docs:start:read_minter
         assert(storage.minters.at(context.msg_sender()).read(), "caller is not minter");
         // docs:end:read_minter
-        let amount = SafeU120::new(amount);
+        let amount = U128::from_integer(amount);
         let new_balance = storage.public_balances.at(to).read().add(amount);
         let supply = storage.total_supply.read().add(amount);
 
@@ -187,7 +168,7 @@ contract Token {
         assert(storage.minters.at(context.msg_sender()).read(), "caller is not minter");
         let pending_shields = storage.pending_shields;
         let mut note = TransparentNote::new(amount, secret_hash);
-        let supply = storage.total_supply.read().add(SafeU120::new(amount));
+        let supply = storage.total_supply.read().add(U128::from_integer(amount));
 
         storage.total_supply.write(supply);
         // docs:start:insert_from_public
@@ -195,6 +176,30 @@ contract Token {
         // docs:end:insert_from_public
     }
     // docs:end:mint_private
+
+    #[aztec(private)]
+    fn privately_mint_private_note(amount: Field, note_counter: u32) {
+        let pt = PartitionTable::with_single_shield_id(note_counter as Field);
+        storage.balances.add(context.msg_sender(), U128::from_integer(amount), pt);
+
+        let selector = FunctionSelector::from_signature("assert_minter_and_mint((Field),Field)");
+        let _void = context.call_public_function(
+            context.this_address(),
+            selector,
+            [context.msg_sender().to_field(), amount]
+        );
+
+        let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
+        let _void = context.call_public_function(context.this_address(), selector, [note_counter as Field]);
+    }
+
+    #[aztec(public)]
+    #[aztec(internal)]
+    fn assert_minter_and_mint(minter: AztecAddress, amount: Field) {
+        assert(storage.minters.at(minter).read(), "caller is not minter");
+        let supply = storage.total_supply.read() + U128::from_integer(amount);
+        storage.total_supply.write(supply);
+    }
 
     // docs:start:shield
     #[aztec(public)]
@@ -206,11 +211,11 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
-        let amount = SafeU120::new(amount);
+        let amount = U128::from_integer(amount);
         let from_balance = storage.public_balances.at(from).read().sub(amount);
 
         let pending_shields = storage.pending_shields;
-        let mut note = TransparentNote::new(amount.value as Field, secret_hash);
+        let mut note = TransparentNote::new(amount.to_integer(), secret_hash);
 
         storage.public_balances.at(from).write(from_balance);
         pending_shields.insert_from_public(&mut note);
@@ -226,7 +231,7 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
-        let amount = SafeU120::new(amount);
+        let amount = U128::from_integer(amount);
         let from_balance = storage.public_balances.at(from).read().sub(amount);
         storage.public_balances.at(from).write(from_balance);
 
@@ -246,7 +251,7 @@ contract Token {
         }
         // docs:end:assert_current_call_valid_authwit_public
 
-        let amount = SafeU120::new(amount);
+        let amount = U128::from_integer(amount);
         let from_balance = storage.public_balances.at(from).read().sub(amount);
         storage.public_balances.at(from).write(from_balance);
 
@@ -257,7 +262,7 @@ contract Token {
 
     // docs:start:redeem_shield
     #[aztec(private)]
-    fn redeem_shield(to: AztecAddress, amount: Field, secret: Field) {
+    fn redeem_shield(to: AztecAddress, amount: Field, note_counter: u32, secret: Field) {
         let pending_shields = storage.pending_shields;
         let secret_hash = compute_secret_hash(secret);
         // Get 1 note (set_limit(1)) which has amount stored in field with index 0 (select(0, amount)) and secret_hash
@@ -265,15 +270,15 @@ contract Token {
         let options = NoteGetterOptions::new().select(0, amount, Option::none()).select(1, secret_hash, Option::none()).set_limit(1);
         let notes = pending_shields.get_notes(options);
         let note = notes[0].unwrap_unchecked();
-        // Remove the note from the pending shields set 
+        // Remove the note from the pending shields set
         pending_shields.remove(note);
 
-        let pt = PartitionTable::default();
+        let pt = PartitionTable::with_single_shield_id(note_counter as Field);
         // Add the token note to user's balances set
-        storage.balances.add(to, SafeU120::new(amount), pt);
+        storage.balances.add(to, U128::from_integer(amount), pt);
 
-        let selector = FunctionSelector::from_signature("_increment_num_shields()");
-        let _void = context.call_public_function(context.this_address(), selector, []);
+        let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
+        let _void = context.call_public_function(context.this_address(), selector, [note_counter as Field]);
     }
     // docs:end:redeem_shield
 
@@ -286,7 +291,7 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
-        let pt = storage.balances.sub(from, SafeU120::new(amount));
+        let pt = storage.balances.sub(from, U128::from_integer(amount));
 
         for i in 0..pt.attestations.max_len() {
             if i < pt.attestations.len() {
@@ -310,7 +315,7 @@ contract Token {
         }
         // docs:end:assert_current_call_valid_authwit
 
-        let amount = SafeU120::new(amount);
+        let amount = U128::from_integer(amount);
         let pt = storage.balances.sub(from, amount);
         // docs:start:increase_private_balance
         storage.balances.add(to, amount, pt);
@@ -327,7 +332,7 @@ contract Token {
             assert(nonce == 0, "invalid nonce");
         }
 
-        storage.balances.sub(from, SafeU120::new(amount));
+        storage.balances.sub(from, U128::from_integer(amount));
 
         let selector = FunctionSelector::from_signature("_reduce_total_supply(Field)");
         let _void = context.call_public_function(context.this_address(), selector, [amount]);
@@ -360,48 +365,34 @@ contract Token {
         }
     }
 
-    // docs:start:initialize
-    #[aztec(public)]
-    internal fn _initialize(
-        new_admin: AztecAddress,
-        // name: FieldCompressedString,
-        // symbol: FieldCompressedString,
-        // decimals: u8
-    ) {
-        assert(!new_admin.is_zero(), "invalid admin");
-        storage.admin.write(new_admin);
-        storage.minters.at(new_admin).write(true);
-        // storage.name.initialize(name);
-        // storage.symbol.initialize(symbol);
-        // // docs:start:initialize_decimals
-        // storage.decimals.initialize(decimals);
-        // // docs:end:initialize_decimals
-    }
-    // docs:end:initialize
-
     /// Internal ///
 
     // docs:start:increase_public_balance
     #[aztec(public)]
-    internal fn _increase_public_balance(to: AztecAddress, amount: Field) {
-        let new_balance = storage.public_balances.at(to).read().add(SafeU120::new(amount));
+    #[aztec(internal)]
+    fn _increase_public_balance(to: AztecAddress, amount: Field) {
+        let new_balance = storage.public_balances.at(to).read().add(U128::from_integer(amount));
         storage.public_balances.at(to).write(new_balance);
     }
     // docs:end:increase_public_balance
 
     // docs:start:reduce_total_supply
     #[aztec(public)]
-    internal fn _reduce_total_supply(amount: Field) {
+    #[aztec(internal)]
+    fn _reduce_total_supply(amount: Field) {
         // Only to be called from burn.
-        let new_supply = storage.total_supply.read().sub(SafeU120::new(amount));
+        let new_supply = storage.total_supply.read().sub(U128::from_integer(amount));
         storage.total_supply.write(new_supply);
     }
     // docs:end:reduce_total_supply
 
+    // TODO: Can't read public state from private so asserting
     #[aztec(public)]
-    internal fn _increment_num_shields() {
-        let counter = storage.num_shields.read() + 1;
-        storage.num_shields.write(counter);
+    #[aztec(internal)]
+    fn _assert_note_counter_and_increment(note_counter: u32) {
+        let stored_counter = storage.note_counter.read();
+        assert(stored_counter == note_counter, "invalid note_counter");
+        storage.note_counter.write(stored_counter + 1);
     }
 
     /// Unconstrained ///
@@ -419,25 +410,25 @@ contract Token {
     // docs:end:is_minter
 
     // docs:start:total_supply
-    unconstrained fn total_supply() -> pub u120 {
-        storage.total_supply.read().value
+    unconstrained fn total_supply() -> pub Field {
+        storage.total_supply.read().to_integer()
     }
     // docs:end:total_supply
 
     // docs:start:balance_of_private
-    unconstrained fn balance_of_private(owner: AztecAddress) -> pub u120 {
-        storage.balances.balance_of(owner).value
+    unconstrained fn balance_of_private(owner: AztecAddress) -> pub Field {
+        storage.balances.balance_of(owner).to_integer()
     }
     // docs:end:balance_of_private
 
     // docs:start:balance_of_public
-    unconstrained fn balance_of_public(owner: AztecAddress) -> pub u120 {
-        storage.public_balances.at(owner).read().value
+    unconstrained fn balance_of_public(owner: AztecAddress) -> pub Field {
+        storage.public_balances.at(owner).read().to_integer()
     }
     // docs:end:balance_of_public
 
-    unconstrained fn num_shields() -> pub u32 {
-        storage.num_shields.read()
+    unconstrained fn note_counter() -> pub u32 {
+        storage.note_counter.read()
     }
 
     // At least one note has attestation.
@@ -448,30 +439,5 @@ contract Token {
     unconstrained fn last_unattested_note(owner: AztecAddress, attestor: AztecAddress) -> pub Option<TokenNote> {
         storage.balances.last_unattested_note_unc(owner, attestor)
     }
-
-    // docs:start:compute_note_hash_and_nullifier
-    // Computes note hash and nullifier.
-    // Note 1: Needs to be defined by every contract producing logs.
-    // Note 2: Having it in all the contracts gives us the ability to compute the note hash and nullifier differently for different kind of notes.
-    unconstrained fn compute_note_hash_and_nullifier(
-        contract_address: AztecAddress,
-        nonce: Field,
-        storage_slot: Field,
-        note_type_id: Field,
-        serialized_note: [Field; TOKEN_NOTE_LEN]
-    ) -> pub [Field; 4] {
-        let note_header = NoteHeader::new(contract_address, nonce, storage_slot);
-
-        if (note_type_id == TransparentNote::get_note_type_id()) {
-            note_utils::compute_note_hash_and_nullifier(
-                TransparentNote::deserialize_content,
-                note_header,
-                serialized_note
-            )
-        } else {
-            note_utils::compute_note_hash_and_nullifier(TokenNote::deserialize_content, note_header, serialized_note)
-        }
-    }
-    // docs:end:compute_note_hash_and_nullifier
 }
 // docs:end:token_all
