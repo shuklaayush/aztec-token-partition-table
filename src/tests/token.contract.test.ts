@@ -187,12 +187,12 @@ describe('e2e_token_contract', () => {
 
         it('redeem as recipient', async () => {
           await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
-          const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+          const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
           const receiptClaim = await txClaim.wait();
           expect(receiptClaim.status).toBe(TxStatus.MINED);
           tokenSim.redeemShield(accounts[0].address, amount);
 
-          expect(await asset.methods.num_shields().view()).toEqual(1n);
+          expect(await asset.methods.note_counter().view()).toEqual(1n);
         });
       });
 
@@ -202,7 +202,7 @@ describe('e2e_token_contract', () => {
             'The note has been destroyed.',
           );
           await expect(
-            asset.methods.redeem_shield(accounts[0].address, amount, secret).simulate(),
+            asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).simulate(),
           ).rejects.toThrowError('Can only remove a note that has been read from the set.');
         });
 
@@ -500,7 +500,7 @@ describe('e2e_token_contract', () => {
           const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${messageHash.toString('hex')}`,
+            `Unknown auth witness for message hash 0x${messageHash.toString()}`,
           );
         });
 
@@ -521,7 +521,7 @@ describe('e2e_token_contract', () => {
           await wallets[2].addAuthWitness(witness);
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${expectedMessageHash.toString('hex')}`,
+            `Unknown auth witness for message hash 0x${expectedMessageHash.toString()}`,
           );
           expect(await asset.methods.balance_of_private(accounts[0].address).view()).toEqual(balance0);
         });
@@ -551,7 +551,7 @@ describe('e2e_token_contract', () => {
 
       // Redeem it
       await addPendingShieldNoteToPXE(0, amount, secretHash, receipt.txHash);
-      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
       const receiptClaim = await txClaim.wait();
       expect(receiptClaim.status).toBe(TxStatus.MINED);
 
@@ -585,7 +585,7 @@ describe('e2e_token_contract', () => {
 
       // Redeem it
       await addPendingShieldNoteToPXE(0, amount, secretHash, receipt.txHash);
-      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
       const receiptClaim = await txClaim.wait();
       expect(receiptClaim.status).toBe(TxStatus.MINED);
 
@@ -760,7 +760,7 @@ describe('e2e_token_contract', () => {
         await wallets[2].addAuthWitness(witness);
 
         await expect(action.simulate()).rejects.toThrowError(
-          `Unknown auth witness for message hash 0x${expectedMessageHash.toString('hex')}`,
+          `Unknown auth witness for message hash 0x${expectedMessageHash.toString()}`,
         );
       });
     });
@@ -948,7 +948,7 @@ describe('e2e_token_contract', () => {
           const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${messageHash.toString('hex')}`,
+            `Unknown auth witness for message hash 0x${messageHash.toString()}`,
           );
         });
 
@@ -967,7 +967,7 @@ describe('e2e_token_contract', () => {
           await wallets[2].addAuthWitness(witness);
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${expectedMessageHash.toString('hex')}`,
+            `Unknown auth witness for message hash 0x${expectedMessageHash.toString()}`,
           );
         });
       });
@@ -1006,7 +1006,7 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
         const receipt2 = await tx2.wait();
         expect(receipt2.status).toBe(TxStatus.MINED);
         tokenSim.redeemShield(accounts[0].address, amount);
@@ -1080,7 +1080,7 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
         const receipt2 = await tx2.wait();
         expect(receipt2.status).toBe(TxStatus.MINED);
         tokenSim.redeemShield(accounts[0].address, amount);
@@ -1177,7 +1177,7 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
         const receipt2 = await tx2.wait();
         expect(receipt2.status).toBe(TxStatus.MINED);
         tokenSim.redeemShield(accounts[0].address, amount);
