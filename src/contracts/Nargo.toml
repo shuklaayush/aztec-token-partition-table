@@ -1,2 +1,2 @@
 [workspace]
-members = ["attestor", "token", "common_types"]
+members = ["attestor", "common_types", "token"]

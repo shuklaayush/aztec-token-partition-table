@@ -1,11 +1,10 @@
-// TODO: Attestor contract
-//       The Attestor contract tracks blacklisted deposit IDs. 
-//       Attestations are dispensed if a note’s partition table does not intersect with the blacklist.
-//
-//       The blacklist must be accessible from private functions. A possible solution is to store the blacklist as an indexed merkle tree. 
-//       Race conditions that arise from updating the tree can be deferred and considered out-of-scope for the MPV.
-//
-//       The request_attestation method requires a set-non-intersection check that is of independent interest and should be implemented as a 3rd party library.
+// The Attestor contract tracks blacklisted deposit IDs. 
+// Attestations are dispensed if a note’s partition table does not intersect with the blacklist.
+
+// The blacklist must be accessible from private functions. A possible solution is to store the blacklist as an indexed merkle tree. 
+// Race conditions that arise from updating the tree can be deferred and considered out-of-scope for the MPV.
+
+// The request_attestation method requires a set-non-intersection check that is of independent interest and should be implemented as a 3rd party library.
 
 contract Attestor {
     ////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +139,11 @@ contract Attestor {
         root
     }
 
-    unconstrained fn is_not_blacklisted(token: AztecAddress, shield_id: Field, proof: [Field; DEPTH]) -> pub bool {
+    unconstrained fn is_not_blacklisted(
+        token: AztecAddress,
+        shield_id: Field,
+        proof: [Field; DEPTH]
+    ) -> pub bool {
         let mut root = storage.blacklists.at(token).read();
         if root == 0 {
             root = EMPTY_ROOT;

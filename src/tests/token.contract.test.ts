@@ -24,6 +24,12 @@ import { getInitialTestAccountsWallets } from '@aztec/accounts/testing';
 import { afterEach, beforeAll, expect, jest } from '@jest/globals';
 import { setupEnvironment } from '../environment/index.js';
 
+/// Common errors
+export const U128_UNDERFLOW_ERROR = "Assertion failed: attempt to subtract with underflow 'hi == high'";
+export const U128_OVERFLOW_ERROR = "Assertion failed: attempt to add with overflow 'hi == high'";
+export const BITSIZE_TOO_BIG_ERROR =
+  "Assertion failed: call to assert_max_bit_size 'self.__assert_max_bit_size(bit_size)'";
+
 const TIMEOUT = 60_000;
 const VEC_LEN = 10;
 const TOKEN_NAME = 'Aztec Token';
@@ -143,24 +149,24 @@ describe('e2e_token_contract', () => {
           ).rejects.toThrowError('Assertion failed: caller is not minter');
         });
 
-        it('mint >u120 tokens to overflow', async () => {
-          const amount = 2n ** 120n; // SafeU120::max() + 1;
+        it('mint >u128 tokens to overflow', async () => {
+          const amount = 2n ** 128n; // U128::max() + 1;
           await expect(asset.methods.mint_public(accounts[0].address, amount).simulate()).rejects.toThrowError(
-            'Assertion failed: Value too large for SafeU120',
+            BITSIZE_TOO_BIG_ERROR,
           );
         });
 
-        it('mint <u120 but recipient balance >u120', async () => {
-          const amount = 2n ** 120n - tokenSim.balanceOfPublic(accounts[0].address);
+        it('mint <u128 but recipient balance >u128', async () => {
+          const amount = 2n ** 128n - tokenSim.balanceOfPublic(accounts[0].address);
           await expect(asset.methods.mint_public(accounts[0].address, amount).simulate()).rejects.toThrowError(
-            'Assertion failed: Overflow',
+            U128_OVERFLOW_ERROR,
           );
         });
 
-        it('mint <u120 but such that total supply >u120', async () => {
-          const amount = 2n ** 120n - tokenSim.balanceOfPublic(accounts[0].address);
+        it('mint <u128 but such that total supply >u128', async () => {
+          const amount = 2n ** 128n - tokenSim.balanceOfPublic(accounts[0].address);
           await expect(asset.methods.mint_public(accounts[1].address, amount).simulate()).rejects.toThrowError(
-            'Assertion failed: Overflow',
+            U128_OVERFLOW_ERROR,
           );
         });
       });
@@ -187,12 +193,17 @@ describe('e2e_token_contract', () => {
 
         it('redeem as recipient', async () => {
           await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
-          const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
-          const receiptClaim = await txClaim.wait();
+
+          const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).send();
+          // docs:start:debug
+          const receiptClaim = await txClaim.wait({ debug: true });
+          // docs:end:debug
           expect(receiptClaim.status).toBe(TxStatus.MINED);
           tokenSim.redeemShield(accounts[0].address, amount);
-
-          expect(await asset.methods.note_counter().view()).toEqual(1n);
+          // 1 note should be created containing `amount` of tokens
+          const { visibleNotes } = receiptClaim.debugInfo!;
+          expect(visibleNotes.length).toBe(1);
+          expect(visibleNotes[0].note.items[0].toBigInt()).toBe(amount);
         });
       });
 
@@ -202,7 +213,7 @@ describe('e2e_token_contract', () => {
             'The note has been destroyed.',
           );
           await expect(
-            asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).simulate(),
+            asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).simulate(),
           ).rejects.toThrowError('Can only remove a note that has been read from the set.');
         });
 
@@ -212,25 +223,25 @@ describe('e2e_token_contract', () => {
           ).rejects.toThrowError('Assertion failed: caller is not minter');
         });
 
-        it('mint >u120 tokens to overflow', async () => {
-          const amount = 2n ** 120n; // SafeU120::max() + 1;
+        it('mint >u128 tokens to overflow', async () => {
+          const amount = 2n ** 128n; // U128::max() + 1;
           await expect(asset.methods.mint_private(amount, secretHash).simulate()).rejects.toThrowError(
-            'Assertion failed: Value too large for SafeU120',
+            BITSIZE_TOO_BIG_ERROR,
           );
         });
 
-        it('mint <u120 but recipient balance >u120', async () => {
-          const amount = 2n ** 120n - tokenSim.balanceOfPrivate(accounts[0].address);
-          expect(amount).toBeLessThan(2n ** 120n);
+        it('mint <u128 but recipient balance >u128', async () => {
+          const amount = 2n ** 128n - tokenSim.balanceOfPrivate(accounts[0].address);
+          expect(amount).toBeLessThan(2n ** 128n);
           await expect(asset.methods.mint_private(amount, secretHash).simulate()).rejects.toThrowError(
-            'Assertion failed: Overflow',
+            U128_OVERFLOW_ERROR,
           );
         });
 
-        it('mint <u120 but such that total supply >u120', async () => {
-          const amount = 2n ** 120n - tokenSim.totalSupply;
+        it('mint <u128 but such that total supply >u128', async () => {
+          const amount = 2n ** 128n - tokenSim.totalSupply;
           await expect(asset.methods.mint_private(amount, secretHash).simulate()).rejects.toThrowError(
-            'Assertion failed: Overflow',
+            U128_OVERFLOW_ERROR,
           );
         });
       });
@@ -298,7 +309,7 @@ describe('e2e_token_contract', () => {
           const nonce = 0;
           await expect(
             asset.methods.transfer_public(accounts[0].address, accounts[1].address, amount, nonce).simulate(),
-          ).rejects.toThrowError('Assertion failed: Underflow');
+          ).rejects.toThrowError(U128_UNDERFLOW_ERROR);
         });
 
         it('transfer on behalf of self with non-zero nonce', async () => {
@@ -338,7 +349,7 @@ describe('e2e_token_contract', () => {
           await wallets[0].setPublicAuth(messageHash, true).send().wait();
 
           // Perform the transfer
-          await expect(action.simulate()).rejects.toThrowError('Assertion failed: Underflow');
+          await expect(action.simulate()).rejects.toThrowError(U128_UNDERFLOW_ERROR);
 
           expect(await asset.methods.balance_of_public(accounts[0].address).view()).toEqual(balance0);
           expect(await asset.methods.balance_of_public(accounts[1].address).view()).toEqual(balance1);
@@ -385,6 +396,49 @@ describe('e2e_token_contract', () => {
 
           expect(await asset.methods.balance_of_public(accounts[0].address).view()).toEqual(balance0);
           expect(await asset.methods.balance_of_public(accounts[1].address).view()).toEqual(balance1);
+        });
+
+        it('transfer on behalf of other, cancelled authwit', async () => {
+          const balance0 = await asset.methods.balance_of_public(accounts[0].address).view();
+          const amount = balance0 / 2n;
+          expect(amount).toBeGreaterThan(0n);
+          const nonce = Fr.random();
+
+          const action = asset
+            .withWallet(wallets[1])
+            .methods.transfer_public(accounts[0].address, accounts[1].address, amount, nonce);
+          const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
+
+          await wallets[0].setPublicAuth(messageHash, true).send().wait();
+
+          await wallets[0].cancelAuthWit(messageHash).send().wait();
+
+          // Check that the message hash is no longer valid. Need to try to send since nullifiers are handled by sequencer.
+          const txCancelledAuthwit = asset
+            .withWallet(wallets[1])
+            .methods.transfer_public(accounts[0].address, accounts[1].address, amount, nonce)
+            .send();
+          await expect(txCancelledAuthwit.wait()).rejects.toThrowError('Transaction ');
+        });
+
+        // it('transfer on behalf of other, invalid spend_public_authwit on "from"', async () => {
+        //   const nonce = Fr.random();
+
+        //   // Should fail as the returned value from the badAccount is malformed
+        //   const txCancelledAuthwit = asset
+        //     .withWallet(wallets[1])
+        //     .methods.transfer_public(badAccount.address, accounts[1].address, 0, nonce)
+        //     .send();
+        //   await expect(txCancelledAuthwit.wait()).rejects.toThrowError(
+        //     "Assertion failed: Message not authorized by account 'result == IS_VALID_SELECTOR'",
+        //   );
+        // });
+
+        it.skip('transfer into account to overflow', () => {
+          // This should already be covered by the mint case earlier. e.g., since we cannot mint to overflow, there is not
+          // a way to get funds enough to overflow.
+          // Require direct storage manipulation for us to perform a nice explicit case though.
+          // See https://github.com/AztecProtocol/aztec-packages/issues/1259
         });
       });
     });
@@ -487,6 +541,13 @@ describe('e2e_token_contract', () => {
           expect(await asset.methods.balance_of_private(accounts[1].address).view()).toEqual(balance1);
         });
 
+        it.skip('transfer into account to overflow', () => {
+          // This should already be covered by the mint case earlier. e.g., since we cannot mint to overflow, there is not
+          // a way to get funds enough to overflow.
+          // Require direct storage manipulation for us to perform a nice explicit case though.
+          // See https://github.com/AztecProtocol/aztec-packages/issues/1259
+        });
+
         it('transfer on behalf of other without approval', async () => {
           const balance0 = await asset.methods.balance_of_private(accounts[0].address).view();
           const amount = balance0 / 2n;
@@ -500,7 +561,7 @@ describe('e2e_token_contract', () => {
           const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${messageHash.toString()}`,
+            `Unknown auth witness for message hash ${messageHash.toString()}`,
           );
         });
 
@@ -521,10 +582,48 @@ describe('e2e_token_contract', () => {
           await wallets[2].addAuthWitness(witness);
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${expectedMessageHash.toString()}`,
+            `Unknown auth witness for message hash ${expectedMessageHash.toString()}`,
           );
           expect(await asset.methods.balance_of_private(accounts[0].address).view()).toEqual(balance0);
         });
+
+        it('transfer on behalf of other, cancelled authwit', async () => {
+          const balance0 = await asset.methods.balance_of_private(accounts[0].address).view();
+          const amount = balance0 / 2n;
+          const nonce = Fr.random();
+          expect(amount).toBeGreaterThan(0n);
+
+          // We need to compute the message we want to sign and add it to the wallet as approved
+          const action = asset
+            .withWallet(wallets[1])
+            .methods.transfer(accounts[0].address, accounts[1].address, amount, nonce);
+          const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
+
+          const witness = await wallets[0].createAuthWitness(messageHash);
+          await wallets[1].addAuthWitness(witness);
+
+          await wallets[0].cancelAuthWit(messageHash).send().wait();
+
+          // Perform the transfer, should fail because nullifier already emitted
+          const txCancelledAuthwit = asset
+            .withWallet(wallets[1])
+            .methods.transfer(accounts[0].address, accounts[1].address, amount, nonce)
+            .send();
+          await expect(txCancelledAuthwit.wait()).rejects.toThrowError('Transaction ');
+        });
+
+        // it('transfer on behalf of other, invalid spend_private_authwit on "from"', async () => {
+        //   const nonce = Fr.random();
+
+        //   // Should fail as the returned value from the badAccount is malformed
+        //   const txCancelledAuthwit = asset
+        //     .withWallet(wallets[1])
+        //     .methods.transfer(badAccount.address, accounts[1].address, 0, nonce)
+        //     .send();
+        //   await expect(txCancelledAuthwit.wait()).rejects.toThrowError(
+        //     "Assertion failed: Message not authorized by account 'result == IS_VALID_SELECTOR'",
+        //   );
+        // });
       });
     });
   });
@@ -551,7 +650,7 @@ describe('e2e_token_contract', () => {
 
       // Redeem it
       await addPendingShieldNoteToPXE(0, amount, secretHash, receipt.txHash);
-      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
+      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).send();
       const receiptClaim = await txClaim.wait();
       expect(receiptClaim.status).toBe(TxStatus.MINED);
 
@@ -585,7 +684,7 @@ describe('e2e_token_contract', () => {
 
       // Redeem it
       await addPendingShieldNoteToPXE(0, amount, secretHash, receipt.txHash);
-      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
+      const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).send();
       const receiptClaim = await txClaim.wait();
       expect(receiptClaim.status).toBe(TxStatus.MINED);
 
@@ -599,7 +698,7 @@ describe('e2e_token_contract', () => {
         expect(amount).toBeGreaterThan(0n);
 
         await expect(asset.methods.shield(accounts[0].address, amount, secretHash, 0).simulate()).rejects.toThrowError(
-          'Assertion failed: Underflow',
+          U128_UNDERFLOW_ERROR,
         );
       });
 
@@ -624,7 +723,7 @@ describe('e2e_token_contract', () => {
         const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
         await wallets[0].setPublicAuth(messageHash, true).send().wait();
 
-        await expect(action.simulate()).rejects.toThrowError('Assertion failed: Underflow');
+        await expect(action.simulate()).rejects.toThrowError(U128_UNDERFLOW_ERROR);
       });
 
       it('on behalf of other (wrong designated caller)', async () => {
@@ -760,7 +859,7 @@ describe('e2e_token_contract', () => {
         await wallets[2].addAuthWitness(witness);
 
         await expect(action.simulate()).rejects.toThrowError(
-          `Unknown auth witness for message hash 0x${expectedMessageHash.toString()}`,
+          `Unknown auth witness for message hash ${expectedMessageHash.toString()}`,
         );
       });
     });
@@ -796,9 +895,9 @@ describe('e2e_token_contract', () => {
 
         tokenSim.burnPublic(accounts[0].address, amount);
 
-        const burnTx = asset.withWallet(wallets[1]).methods.burn_public(accounts[0].address, amount, nonce).send();
         // Check that the message hash is no longer valid. Need to try to send since nullifiers are handled by sequencer.
-        await expect(burnTx.wait()).rejects.toThrowError('Transaction ');
+        const txReplay = asset.withWallet(wallets[1]).methods.burn_public(accounts[0].address, amount, nonce).send();
+        await expect(txReplay.wait()).rejects.toThrowError('Transaction ');
       });
 
       describe('failure cases', () => {
@@ -807,7 +906,7 @@ describe('e2e_token_contract', () => {
           const amount = balance0 + 1n;
           const nonce = 0;
           await expect(asset.methods.burn_public(accounts[0].address, amount, nonce).simulate()).rejects.toThrowError(
-            'Assertion failed: Underflow',
+            U128_UNDERFLOW_ERROR,
           );
         });
 
@@ -841,7 +940,7 @@ describe('e2e_token_contract', () => {
           const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
           await wallets[0].setPublicAuth(messageHash, true).send().wait();
 
-          await expect(action.simulate()).rejects.toThrowError('Assertion failed: Underflow');
+          await expect(action.simulate()).rejects.toThrowError(U128_UNDERFLOW_ERROR);
         });
 
         it('burn on behalf of other, wrong designated caller', async () => {
@@ -948,7 +1047,7 @@ describe('e2e_token_contract', () => {
           const messageHash = computeAuthWitMessageHash(accounts[1].address, action.request());
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${messageHash.toString()}`,
+            `Unknown auth witness for message hash ${messageHash.toString()}`,
           );
         });
 
@@ -967,7 +1066,7 @@ describe('e2e_token_contract', () => {
           await wallets[2].addAuthWitness(witness);
 
           await expect(action.simulate()).rejects.toThrowError(
-            `Unknown auth witness for message hash 0x${expectedMessageHash.toString()}`,
+            `Unknown auth witness for message hash ${expectedMessageHash.toString()}`,
           );
         });
       });
@@ -1006,7 +1105,7 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).send();
         const receipt2 = await tx2.wait();
         expect(receipt2.status).toBe(TxStatus.MINED);
         tokenSim.redeemShield(accounts[0].address, amount);
@@ -1080,7 +1179,7 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).send();
         const receipt2 = await tx2.wait();
         expect(receipt2.status).toBe(TxStatus.MINED);
         tokenSim.redeemShield(accounts[0].address, amount);
@@ -1177,7 +1276,7 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0, secret).send();
+        const tx2 = asset.methods.redeem_shield(accounts[0].address, amount, 0n, secret).send();
         const receipt2 = await tx2.wait();
         expect(receipt2.status).toBe(TxStatus.MINED);
         tokenSim.redeemShield(accounts[0].address, amount);

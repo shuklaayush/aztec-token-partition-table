@@ -6,11 +6,11 @@ use dep::aztec::protocol_types::{address::AztecAddress, abis::function_selector:
 
 use dep::common_types::partition_table::PartitionTable;
 
-struct TokenAddToBlacklistStruct {
+struct TokenRemoveFromBlacklistStruct {
   inner: Field,
 }
 
-struct TokenRemoveFromBlacklistStruct {
+struct TokenAddToBlacklistStruct {
   inner: Field,
 }
 
@@ -22,106 +22,6 @@ struct AttestorPrivateContextInterface {
 impl AttestorPrivateContextInterface {
     pub fn at(address: AztecAddress) -> Self {
         Self { address }
-    }
-
-    pub fn add_to_blacklist(
-        self,
-        context: &mut PrivateContext,
-        token: TokenAddToBlacklistStruct,
-        shield_id: Field,
-        proof: [Field; 32]
-    ) {
-        let mut serialized_args = [0; 34];
-        serialized_args[0] = token.inner;
-        serialized_args[1] = shield_id;
-        serialized_args[2] = proof[0];
-        serialized_args[3] = proof[1];
-        serialized_args[4] = proof[2];
-        serialized_args[5] = proof[3];
-        serialized_args[6] = proof[4];
-        serialized_args[7] = proof[5];
-        serialized_args[8] = proof[6];
-        serialized_args[9] = proof[7];
-        serialized_args[10] = proof[8];
-        serialized_args[11] = proof[9];
-        serialized_args[12] = proof[10];
-        serialized_args[13] = proof[11];
-        serialized_args[14] = proof[12];
-        serialized_args[15] = proof[13];
-        serialized_args[16] = proof[14];
-        serialized_args[17] = proof[15];
-        serialized_args[18] = proof[16];
-        serialized_args[19] = proof[17];
-        serialized_args[20] = proof[18];
-        serialized_args[21] = proof[19];
-        serialized_args[22] = proof[20];
-        serialized_args[23] = proof[21];
-        serialized_args[24] = proof[22];
-        serialized_args[25] = proof[23];
-        serialized_args[26] = proof[24];
-        serialized_args[27] = proof[25];
-        serialized_args[28] = proof[26];
-        serialized_args[29] = proof[27];
-        serialized_args[30] = proof[28];
-        serialized_args[31] = proof[29];
-        serialized_args[32] = proof[30];
-        serialized_args[33] = proof[31];
-
-        context.call_public_function(
-            self.address,
-            FunctionSelector::from_field(0x52e0ac0c),
-            serialized_args
-        )
-    }
-
-    pub fn remove_from_blacklist(
-        self,
-        context: &mut PrivateContext,
-        token: TokenRemoveFromBlacklistStruct,
-        shield_id: Field,
-        proof: [Field; 32]
-    ) {
-        let mut serialized_args = [0; 34];
-        serialized_args[0] = token.inner;
-        serialized_args[1] = shield_id;
-        serialized_args[2] = proof[0];
-        serialized_args[3] = proof[1];
-        serialized_args[4] = proof[2];
-        serialized_args[5] = proof[3];
-        serialized_args[6] = proof[4];
-        serialized_args[7] = proof[5];
-        serialized_args[8] = proof[6];
-        serialized_args[9] = proof[7];
-        serialized_args[10] = proof[8];
-        serialized_args[11] = proof[9];
-        serialized_args[12] = proof[10];
-        serialized_args[13] = proof[11];
-        serialized_args[14] = proof[12];
-        serialized_args[15] = proof[13];
-        serialized_args[16] = proof[14];
-        serialized_args[17] = proof[15];
-        serialized_args[18] = proof[16];
-        serialized_args[19] = proof[17];
-        serialized_args[20] = proof[18];
-        serialized_args[21] = proof[19];
-        serialized_args[22] = proof[20];
-        serialized_args[23] = proof[21];
-        serialized_args[24] = proof[22];
-        serialized_args[25] = proof[23];
-        serialized_args[26] = proof[24];
-        serialized_args[27] = proof[25];
-        serialized_args[28] = proof[26];
-        serialized_args[29] = proof[27];
-        serialized_args[30] = proof[28];
-        serialized_args[31] = proof[29];
-        serialized_args[32] = proof[30];
-        serialized_args[33] = proof[31];
-
-        context.call_public_function(
-            self.address,
-            FunctionSelector::from_field(0xe07941f0),
-            serialized_args
-        )
     }
 
     pub fn request_attestation(
@@ -484,25 +384,64 @@ impl AttestorPrivateContextInterface {
             serialized_args
         )
     }
-}
 
-// Interface for calling Attestor functions from a public context
-struct AttestorPublicContextInterface {
-  address: AztecAddress,
-}
+    pub fn remove_from_blacklist(
+        self,
+        context: &mut PrivateContext,
+        token: TokenRemoveFromBlacklistStruct,
+        shield_id: Field,
+        proof: [Field; 32]
+    ) {
+        let mut serialized_args = [0; 34];
+        serialized_args[0] = token.inner;
+        serialized_args[1] = shield_id;
+        serialized_args[2] = proof[0];
+        serialized_args[3] = proof[1];
+        serialized_args[4] = proof[2];
+        serialized_args[5] = proof[3];
+        serialized_args[6] = proof[4];
+        serialized_args[7] = proof[5];
+        serialized_args[8] = proof[6];
+        serialized_args[9] = proof[7];
+        serialized_args[10] = proof[8];
+        serialized_args[11] = proof[9];
+        serialized_args[12] = proof[10];
+        serialized_args[13] = proof[11];
+        serialized_args[14] = proof[12];
+        serialized_args[15] = proof[13];
+        serialized_args[16] = proof[14];
+        serialized_args[17] = proof[15];
+        serialized_args[18] = proof[16];
+        serialized_args[19] = proof[17];
+        serialized_args[20] = proof[18];
+        serialized_args[21] = proof[19];
+        serialized_args[22] = proof[20];
+        serialized_args[23] = proof[21];
+        serialized_args[24] = proof[22];
+        serialized_args[25] = proof[23];
+        serialized_args[26] = proof[24];
+        serialized_args[27] = proof[25];
+        serialized_args[28] = proof[26];
+        serialized_args[29] = proof[27];
+        serialized_args[30] = proof[28];
+        serialized_args[31] = proof[29];
+        serialized_args[32] = proof[30];
+        serialized_args[33] = proof[31];
 
-impl AttestorPublicContextInterface {
-    pub fn at(address: AztecAddress) -> Self {
-        Self { address }
+        context.call_public_function(
+            self.address,
+            FunctionSelector::from_field(0xe07941f0),
+            serialized_args
+        )
     }
 
     pub fn add_to_blacklist(
         self,
-        context: PublicContext,
+        context: &mut PrivateContext,
         token: TokenAddToBlacklistStruct,
         shield_id: Field,
         proof: [Field; 32]
-    ) -> [Field; RETURN_VALUES_LENGTH] {
+    ) {
         let mut serialized_args = [0; 34];
         serialized_args[0] = token.inner;
         serialized_args[1] = shield_id;
@@ -544,6 +483,17 @@ impl AttestorPublicContextInterface {
             FunctionSelector::from_field(0x52e0ac0c),
             serialized_args
         )
+    }
+}
+
+// Interface for calling Attestor functions from a public context
+struct AttestorPublicContextInterface {
+  address: AztecAddress,
+}
+
+impl AttestorPublicContextInterface {
+    pub fn at(address: AztecAddress) -> Self {
+        Self { address }
     }
 
     pub fn remove_from_blacklist(
@@ -592,6 +542,56 @@ impl AttestorPublicContextInterface {
         context.call_public_function(
             self.address,
             FunctionSelector::from_field(0xe07941f0),
+            serialized_args
+        )
+    }
+
+    pub fn add_to_blacklist(
+        self,
+        context: PublicContext,
+        token: TokenAddToBlacklistStruct,
+        shield_id: Field,
+        proof: [Field; 32]
+    ) -> [Field; RETURN_VALUES_LENGTH] {
+        let mut serialized_args = [0; 34];
+        serialized_args[0] = token.inner;
+        serialized_args[1] = shield_id;
+        serialized_args[2] = proof[0];
+        serialized_args[3] = proof[1];
+        serialized_args[4] = proof[2];
+        serialized_args[5] = proof[3];
+        serialized_args[6] = proof[4];
+        serialized_args[7] = proof[5];
+        serialized_args[8] = proof[6];
+        serialized_args[9] = proof[7];
+        serialized_args[10] = proof[8];
+        serialized_args[11] = proof[9];
+        serialized_args[12] = proof[10];
+        serialized_args[13] = proof[11];
+        serialized_args[14] = proof[12];
+        serialized_args[15] = proof[13];
+        serialized_args[16] = proof[14];
+        serialized_args[17] = proof[15];
+        serialized_args[18] = proof[16];
+        serialized_args[19] = proof[17];
+        serialized_args[20] = proof[18];
+        serialized_args[21] = proof[19];
+        serialized_args[22] = proof[20];
+        serialized_args[23] = proof[21];
+        serialized_args[24] = proof[22];
+        serialized_args[25] = proof[23];
+        serialized_args[26] = proof[24];
+        serialized_args[27] = proof[25];
+        serialized_args[28] = proof[26];
+        serialized_args[29] = proof[27];
+        serialized_args[30] = proof[28];
+        serialized_args[31] = proof[29];
+        serialized_args[32] = proof[30];
+        serialized_args[33] = proof[31];
+
+        context.call_public_function(
+            self.address,
+            FunctionSelector::from_field(0x52e0ac0c),
             serialized_args
         )
     }
