@@ -14,7 +14,7 @@ import { beforeAll, expect, jest } from '@jest/globals';
 
 import { setupEnvironment } from '../environment/index.js';
 
-const TIMEOUT = 60_000;
+const TIMEOUT = 100_000;
 
 describe('e2e_attestor_contract', () => {
   jest.setTimeout(TIMEOUT);
@@ -27,7 +27,7 @@ describe('e2e_attestor_contract', () => {
 
   let attestorSim: AttestorSimulator;
   let pxe: PXE;
-  
+
   let admin: AztecAddress;
   let token: AztecAddress;
 
@@ -37,7 +37,7 @@ describe('e2e_attestor_contract', () => {
     // wallets = await createAccounts(pxe, 3);
     accounts = await pxe.getRegisteredAccounts();
     wallets = await getInitialTestAccountsWallets(pxe);
-    
+
     logger(`Accounts: ${accounts.map(a => a.toReadableString())}`);
     logger(`Wallets: ${wallets.map(w => w.getAddress().toString())}`);
 

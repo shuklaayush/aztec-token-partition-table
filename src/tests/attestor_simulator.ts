@@ -2,7 +2,6 @@ import { AztecAddress } from '@aztec/aztec.js';
 import { Fr } from '@aztec/foundation/fields';
 import { newTree, SparseTree, Pedersen } from '@aztec/merkle-tree';
 import { openTmpStore } from '@aztec/kv-store/utils';
-import { default as levelup } from 'levelup';
 import { type MemDown, default as memdown } from 'memdown';
 
 const ABSENT = new Fr(0);
@@ -14,11 +13,11 @@ export const createMemDown = () => (memdown as any)() as MemDown<any, any>;
 export class AttestorSimulator {
   private blacklist: Map<AztecAddress, SparseTree> = new Map();
 
-  constructor() { }
-  
+  constructor() {}
+
   async initializeTokenBlacklist(token: AztecAddress) {
     const db = openTmpStore();
-    await this.blacklist.set(token, await newTree(SparseTree, db, new Pedersen(), "attestor", DEPTH));
+    await this.blacklist.set(token, await newTree(SparseTree, db, new Pedersen(), 'attestor', DEPTH));
   }
 
   public async addToBlacklist(token: AztecAddress, shieldId: bigint) {

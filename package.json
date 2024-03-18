@@ -34,12 +34,14 @@
     "rootDir": "./src"
   },
   "dependencies": {
-    "@aztec/accounts": "0.27.2",
-    "@aztec/aztec.js": "0.27.2",
-    "@aztec/circuits.js": "0.27.2",
-    "@aztec/foundation": "0.27.2",
-    "@aztec/merkle-tree": "0.27.2",
-    "@aztec/types": "0.27.2"
+    "@aztec/accounts": "0.29.0",
+    "@aztec/aztec.js": "0.29.0",
+    "@aztec/circuits.js": "0.29.0",
+    "@aztec/foundation": "0.29.0",
+    "@aztec/l1-artifacts": "0.29.0",
+    "@aztec/merkle-tree": "0.29.0",
+    "@aztec/noir-contracts.js": "0.29.0",
+    "@aztec/types": "0.29.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",

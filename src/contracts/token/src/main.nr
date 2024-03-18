@@ -13,7 +13,7 @@ mod types;
 contract Token {
     // Libs
 
-    // use dep::compressed_string::FieldCompressedString;
+    use dep::compressed_string::FieldCompressedString;
 
     use dep::aztec::prelude::{
         NoteGetterOptions, NoteHeader, Map, PublicMutable, SharedImmutable, PrivateSet,
@@ -52,13 +52,12 @@ contract Token {
         pending_shields: PrivateSet<TransparentNote>,
         // docs:end:storage_pending_shields
         public_balances: Map<AztecAddress, PublicMutable<U128>>,
-        // symbol: SharedImmutable<FieldCompressedString>,
-        // name: SharedImmutable<FieldCompressedString>,
+        symbol: SharedImmutable<FieldCompressedString>,
+        name: SharedImmutable<FieldCompressedString>,
         // docs:start:storage_decimals
-        // decimals: SharedImmutable<u8>,
+        decimals: SharedImmutable<u8>,
         // docs:end:storage_decimals
-        // total number of shielded notes
-        // numShields from spec
+        // total number of shielded notes, numShields from spec
         note_counter: PublicMutable<u32>,
     }
     // docs:end:storage_struct
@@ -66,15 +65,14 @@ contract Token {
     // docs:start:constructor
     #[aztec(public)]
     #[aztec(initializer)]
-    // fn constructor(admin: AztecAddress, name: str<31>, symbol: str<31>, decimals: u8) {
-    fn constructor(admin: AztecAddress) {
+    fn constructor(admin: AztecAddress, name: str<31>, symbol: str<31>, decimals: u8) {
         assert(!admin.is_zero(), "invalid admin");
         storage.admin.write(admin);
         storage.minters.at(admin).write(true);
-        // storage.name.initialize(FieldCompressedString::from_string(name));
-        // storage.symbol.initialize(FieldCompressedString::from_string(symbol));
+        storage.name.initialize(FieldCompressedString::from_string(name));
+        storage.symbol.initialize(FieldCompressedString::from_string(symbol));
         // docs:start:initialize_decimals
-        // storage.decimals.initialize(decimals);
+        storage.decimals.initialize(decimals);
         // docs:end:initialize_decimals
     }
     // docs:end:constructor
@@ -89,51 +87,51 @@ contract Token {
     }
     // docs:end:set_admin
 
-    // #[aztec(public)]
-    // fn public_get_name() -> pub FieldCompressedString {
-    //     storage.name.read_public()
-    // }
+    #[aztec(public)]
+    fn public_get_name() -> pub FieldCompressedString {
+        storage.name.read_public()
+    }
 
-    // #[aztec(private)]
-    // fn private_get_name() -> pub FieldCompressedString {
-    //     storage.name.read_private()
-    // }
+    #[aztec(private)]
+    fn private_get_name() -> pub FieldCompressedString {
+        storage.name.read_private()
+    }
 
-    // unconstrained fn un_get_name() -> pub [u8; 31] {
-    //     storage.name.read_public().to_bytes()
-    // }
+    unconstrained fn un_get_name() -> pub [u8; 31] {
+        storage.name.read_public().to_bytes()
+    }
 
-    // #[aztec(public)]
-    // fn public_get_symbol() -> pub FieldCompressedString {
-    //     storage.symbol.read_public()
-    // }
+    #[aztec(public)]
+    fn public_get_symbol() -> pub FieldCompressedString {
+        storage.symbol.read_public()
+    }
 
-    // #[aztec(private)]
-    // fn private_get_symbol() -> pub FieldCompressedString {
-    //     storage.symbol.read_private()
-    // }
+    #[aztec(private)]
+    fn private_get_symbol() -> pub FieldCompressedString {
+        storage.symbol.read_private()
+    }
 
-    // unconstrained fn un_get_symbol() -> pub [u8; 31] {
-    //     storage.symbol.read_public().to_bytes()
-    // }
+    unconstrained fn un_get_symbol() -> pub [u8; 31] {
+        storage.symbol.read_public().to_bytes()
+    }
 
-    // #[aztec(public)]
-    // fn public_get_decimals() -> pub u8 {
-    //     // docs:start:read_decimals_public
-    //     storage.decimals.read_public()
-    //     // docs:end:read_decimals_public
-    // }
+    #[aztec(public)]
+    fn public_get_decimals() -> pub u8 {
+        // docs:start:read_decimals_public
+        storage.decimals.read_public()
+        // docs:end:read_decimals_public
+    }
 
-    // #[aztec(private)]
-    // fn private_get_decimals() -> pub u8 {
-    //     // docs:start:read_decimals_private
-    //     storage.decimals.read_private()
-    //     // docs:end:read_decimals_private
-    // }
+    #[aztec(private)]
+    fn private_get_decimals() -> pub u8 {
+        // docs:start:read_decimals_private
+        storage.decimals.read_private()
+        // docs:end:read_decimals_private
+    }
 
-    // unconstrained fn un_get_decimals() -> pub u8 {
-    //     storage.decimals.read_public()
-    // }
+    unconstrained fn un_get_decimals() -> pub u8 {
+        storage.decimals.read_public()
+    }
 
     // docs:start:set_minter
     #[aztec(public)]
@@ -178,8 +176,8 @@ contract Token {
     // docs:end:mint_private
 
     #[aztec(private)]
-    fn privately_mint_private_note(amount: Field, note_counter: u32) {
-        let pt = PartitionTable::with_single_shield_id(note_counter as Field);
+    fn privately_mint_private_note(amount: Field, note_counter: Field) {
+        let pt = PartitionTable::with_single_shield_id(note_counter);
         storage.balances.add(context.msg_sender(), U128::from_integer(amount), pt);
 
         let selector = FunctionSelector::from_signature("assert_minter_and_mint((Field),Field)");
@@ -190,7 +188,7 @@ contract Token {
         );
 
         let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
-        let _void = context.call_public_function(context.this_address(), selector, [note_counter as Field]);
+        let _void = context.call_public_function(context.this_address(), selector, [note_counter]);
     }
 
     #[aztec(public)]
@@ -263,7 +261,8 @@ contract Token {
     // docs:start:redeem_shield
     // TODO: note_counter should be a u32 but call from test fails with invalid sig
     #[aztec(private)]
-    fn redeem_shield(to: AztecAddress, amount: Field, note_counter: Field, secret: Field) {
+    // fn redeem_shield(to: AztecAddress, amount: Field, note_counter: Field, secret: Field) {
+    fn redeem_shield(to: AztecAddress, amount: Field, secret: Field) {
         let pending_shields = storage.pending_shields;
         let secret_hash = compute_secret_hash(secret);
         // Get 1 note (set_limit(1)) which has amount stored in field with index 0 (select(0, amount)) and secret_hash
@@ -274,12 +273,13 @@ contract Token {
         // Remove the note from the pending shields set
         pending_shields.remove(note);
 
-        let pt = PartitionTable::with_single_shield_id(note_counter);
+        // let pt = PartitionTable::with_single_shield_id(note_counter);
+        let pt = PartitionTable::default();
         // Add the token note to user's balances set
         storage.balances.add(to, U128::from_integer(amount), pt);
 
-        let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
-        let _void = context.call_public_function(context.this_address(), selector, [note_counter]);
+        // let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
+        // let _void = context.call_public_function(context.this_address(), selector, [note_counter]);
     }
     // docs:end:redeem_shield
 
@@ -390,9 +390,9 @@ contract Token {
     // TODO: Can't read public state from private so asserting
     #[aztec(public)]
     #[aztec(internal)]
-    fn _assert_note_counter_and_increment(note_counter: u32) {
+    fn _assert_note_counter_and_increment(note_counter: Field) {
         let stored_counter = storage.note_counter.read();
-        assert(stored_counter == note_counter, "invalid note_counter");
+        assert(stored_counter as Field == note_counter, "invalid note_counter");
         storage.note_counter.write(stored_counter + 1);
     }
 

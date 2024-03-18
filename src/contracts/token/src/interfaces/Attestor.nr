@@ -498,7 +498,7 @@ impl AttestorPublicContextInterface {
 
     pub fn remove_from_blacklist(
         self,
-        context: PublicContext,
+        context: &mut PublicContext,
         token: TokenRemoveFromBlacklistStruct,
         shield_id: Field,
         proof: [Field; 32]
@@ -548,7 +548,7 @@ impl AttestorPublicContextInterface {
 
     pub fn add_to_blacklist(
         self,
-        context: PublicContext,
+        context: &mut PublicContext,
         token: TokenAddToBlacklistStruct,
         shield_id: Field,
         proof: [Field; 32]
