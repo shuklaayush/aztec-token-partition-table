@@ -14,7 +14,7 @@ trait OwnedNote {
     fn get_partition_table(self) -> PartitionTable;
 }
 
-global TOKEN_NOTE_LEN: Field = 28; // 3 + 24 (PT) plus a header.
+global TOKEN_NOTE_LEN: u64 = 3 + PARTITION_TABLE_LEN;
 
 struct TokenNote {
     // the amount of tokens in the note

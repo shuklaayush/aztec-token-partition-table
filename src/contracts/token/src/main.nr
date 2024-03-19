@@ -277,7 +277,6 @@ contract Token {
         let pt = PartitionTable::default();
         // Add the token note to user's balances set
         storage.balances.add(to, U128::from_integer(amount), pt);
-
         // let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
         // let _void = context.call_public_function(context.this_address(), selector, [note_counter]);
     }
