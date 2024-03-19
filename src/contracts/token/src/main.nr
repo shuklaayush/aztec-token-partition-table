@@ -261,8 +261,7 @@ contract Token {
     // docs:start:redeem_shield
     // TODO: note_counter should be a u32 but call from test fails with invalid sig
     #[aztec(private)]
-    // fn redeem_shield(to: AztecAddress, amount: Field, note_counter: Field, secret: Field) {
-    fn redeem_shield(to: AztecAddress, amount: Field, secret: Field) {
+    fn redeem_shield(to: AztecAddress, amount: Field, note_counter: Field, secret: Field) {
         let pending_shields = storage.pending_shields;
         let secret_hash = compute_secret_hash(secret);
         // Get 1 note (set_limit(1)) which has amount stored in field with index 0 (select(0, amount)) and secret_hash
@@ -273,12 +272,11 @@ contract Token {
         // Remove the note from the pending shields set
         pending_shields.remove(note);
 
-        // let pt = PartitionTable::with_single_shield_id(note_counter);
-        let pt = PartitionTable::default();
+        let pt = PartitionTable::with_single_shield_id(note_counter);
         // Add the token note to user's balances set
         storage.balances.add(to, U128::from_integer(amount), pt);
-        // let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
-        // let _void = context.call_public_function(context.this_address(), selector, [note_counter]);
+        let selector = FunctionSelector::from_signature("_assert_note_counter_and_increment(Field)");
+        let _void = context.call_public_function(context.this_address(), selector, [note_counter]);
     }
     // docs:end:redeem_shield
 

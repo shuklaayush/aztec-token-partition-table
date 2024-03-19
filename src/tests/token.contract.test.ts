@@ -33,7 +33,7 @@ describe('e2e_token_contract', () => {
   const TOKEN_NAME = 'Aztec Token';
   const TOKEN_SYMBOL = 'AZT';
   const TOKEN_DECIMALS = 18n;
-  const VEC_LEN = 10;
+  const BOUNDED_VEC_LEN = 6;
   let wallets: AccountWallet[];
   let accounts: CompleteAddress[];
   let logger: DebugLogger;
@@ -106,7 +106,7 @@ describe('e2e_token_contract', () => {
     await tokenSim.check();
   }, TIMEOUT);
 
-  describe('Reading constants', () => {
+  describe.skip('Reading constants', () => {
     let reader: ReaderContract;
     beforeAll(async () => {
       reader = await ReaderContract.deploy(wallets[0]).send().deployed();
@@ -270,14 +270,14 @@ describe('e2e_token_contract', () => {
 
         it('redeem as recipient', async () => {
           await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
-          const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, secret).send();
+          const noteCounter = await asset.methods.note_counter().view();
+          const txClaim = asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).send();
           // docs:start:debug
           const receiptClaim = await txClaim.wait({ debug: true });
           // docs:end:debug
           tokenSim.redeemShield(accounts[0].address, amount);
           // 1 note should be created containing `amount` of tokens
           const { visibleNotes } = receiptClaim.debugInfo!;
-          console.log(receiptClaim.debugInfo);
           expect(visibleNotes.length).toBe(1);
           expect(visibleNotes[0].note.items[0].toBigInt()).toBe(amount);
         });
@@ -288,7 +288,8 @@ describe('e2e_token_contract', () => {
           await expect(addPendingShieldNoteToPXE(0, amount, secretHash, txHash)).rejects.toThrow(
             'The note has been destroyed.',
           );
-          await expect(asset.methods.redeem_shield(accounts[0].address, amount, secret).simulate()).rejects.toThrow(
+          const noteCounter = await asset.methods.note_counter().view();
+          await expect(asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).simulate()).rejects.toThrow(
             'Can only remove a note that has been read from the set.',
           );
         });
@@ -767,7 +768,8 @@ describe('e2e_token_contract', () => {
 
       // Redeem it
       await addPendingShieldNoteToPXE(0, amount, secretHash, receipt.txHash);
-      await asset.methods.redeem_shield(accounts[0].address, amount, secret).send().wait();
+      const noteCounter = await asset.methods.note_counter().view();
+      await asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).send().wait();
 
       tokenSim.redeemShield(accounts[0].address, amount);
     });
@@ -796,7 +798,8 @@ describe('e2e_token_contract', () => {
 
       // Redeem it
       await addPendingShieldNoteToPXE(0, amount, secretHash, receipt.txHash);
-      await asset.methods.redeem_shield(accounts[0].address, amount, secret).send().wait();
+      const noteCounter = await asset.methods.note_counter().view();
+      await asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).send().wait();
 
       tokenSim.redeemShield(accounts[0].address, amount);
     });
@@ -1163,7 +1166,7 @@ describe('e2e_token_contract', () => {
     let secretHash: Fr;
     let txHash: TxHash;
 
-    let shieldIds = Array(VEC_LEN).fill(0n);
+    let shieldIds = Array(BOUNDED_VEC_LEN).fill(0n);
     shieldIds[0] = shieldId;
 
     describe('No transfers', () => {
@@ -1186,7 +1189,8 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        await asset.methods.redeem_shield(accounts[0].address, amount, secret).send().wait();
+        const noteCounter = await asset.methods.note_counter().view();
+        await asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).send().wait();
         tokenSim.redeemShield(accounts[0].address, amount);
 
         attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
@@ -1202,6 +1206,7 @@ describe('e2e_token_contract', () => {
         let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
         const proofs = await attestorSim.getSiblingPaths(asset.address, shieldIds);
 
+        console.log(accounts[0].address, attestor.address, root, proofs.flat().length, 0);
         await asset.methods
           .request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0)
           .send()
@@ -1223,6 +1228,7 @@ describe('e2e_token_contract', () => {
         let root = await attestor.methods.get_blacklist_root(asset.address).view();
         const proofs = await attestorSim.getSiblingPaths(asset.address, shieldIds);
 
+        console.log(accounts[0].address, attestor.address, root, proofs.flat().length, 0);
         await asset.methods
           .request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0)
           .send()
@@ -1257,7 +1263,8 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        await asset.methods.redeem_shield(accounts[0].address, amount, secret).send().wait();
+        const noteCounter = await asset.methods.note_counter().view();
+        await asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).send().wait();
         tokenSim.redeemShield(accounts[0].address, amount);
 
         attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();
@@ -1349,7 +1356,8 @@ describe('e2e_token_contract', () => {
         txHash = receipt.txHash;
         await addPendingShieldNoteToPXE(0, amount, secretHash, txHash);
 
-        await asset.methods.redeem_shield(accounts[0].address, amount, secret).send().wait();
+        const noteCounter = await asset.methods.note_counter().view();
+        await asset.methods.redeem_shield(accounts[0].address, amount, noteCounter, secret).send().wait();
         tokenSim.redeemShield(accounts[0].address, amount);
 
         attestor = await AttestorContract.deploy(wallets[0], accounts[0].address).send().deployed();

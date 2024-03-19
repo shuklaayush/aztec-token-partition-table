@@ -2,7 +2,7 @@ use dep::std::default::Default;
 
 use crate::bounded_vec2::BoundedVec2;
 
-global BOUNDED_VEC_LEN: u64 = 10;
+global BOUNDED_VEC_LEN: u64 = 6; // compute_note_hash_and_nullifier only supports notes with maximum 20 fields (hence 6)
 global PARTITION_TABLE_LEN: u64 = 2*(BOUNDED_VEC_LEN + 1) + 2;
 
 // struct Shield {

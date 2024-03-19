@@ -3,14 +3,13 @@
 use dep::std;
 use dep::aztec::context::{PrivateContext, PublicContext};
 use dep::aztec::protocol_types::{address::AztecAddress, abis::function_selector::FunctionSelector, constants::RETURN_VALUES_LENGTH};
-
 use dep::common_types::partition_table::PartitionTable;
 
-struct TokenRemoveFromBlacklistStruct {
+struct TokenAddToBlacklistStruct {
   inner: Field,
 }
 
-struct TokenAddToBlacklistStruct {
+struct TokenRemoveFromBlacklistStruct {
   inner: Field,
 }
 
@@ -24,14 +23,64 @@ impl AttestorPrivateContextInterface {
         Self { address }
     }
 
+    pub fn add_to_blacklist(
+        self,
+        context: &mut PrivateContext,
+        token: TokenAddToBlacklistStruct,
+        shield_id: Field,
+        proof: [Field; 32]
+    ) {
+        let mut serialized_args = [0; 34];
+        serialized_args[0] = token.inner;
+        serialized_args[1] = shield_id;
+        serialized_args[2] = proof[0];
+        serialized_args[3] = proof[1];
+        serialized_args[4] = proof[2];
+        serialized_args[5] = proof[3];
+        serialized_args[6] = proof[4];
+        serialized_args[7] = proof[5];
+        serialized_args[8] = proof[6];
+        serialized_args[9] = proof[7];
+        serialized_args[10] = proof[8];
+        serialized_args[11] = proof[9];
+        serialized_args[12] = proof[10];
+        serialized_args[13] = proof[11];
+        serialized_args[14] = proof[12];
+        serialized_args[15] = proof[13];
+        serialized_args[16] = proof[14];
+        serialized_args[17] = proof[15];
+        serialized_args[18] = proof[16];
+        serialized_args[19] = proof[17];
+        serialized_args[20] = proof[18];
+        serialized_args[21] = proof[19];
+        serialized_args[22] = proof[20];
+        serialized_args[23] = proof[21];
+        serialized_args[24] = proof[22];
+        serialized_args[25] = proof[23];
+        serialized_args[26] = proof[24];
+        serialized_args[27] = proof[25];
+        serialized_args[28] = proof[26];
+        serialized_args[29] = proof[27];
+        serialized_args[30] = proof[28];
+        serialized_args[31] = proof[29];
+        serialized_args[32] = proof[30];
+        serialized_args[33] = proof[31];
+
+        context.call_public_function(
+            self.address,
+            FunctionSelector::from_field(0x52e0ac0c),
+            serialized_args
+        )
+    }
+
     pub fn request_attestation(
         self,
         context: &mut PrivateContext,
         partition_table: PartitionTable,
         blacklist_root: Field,
-        proofs: [Field; 320]
+        proofs: [Field; 192]
     ) -> [Field; RETURN_VALUES_LENGTH] {
-        let mut serialized_args = [0; 345];
+        let mut serialized_args = [0; 209];
         serialized_args[0] = partition_table.shield_ids.len as Field;
         serialized_args[1] = partition_table.shield_ids.elems[0];
         serialized_args[2] = partition_table.shield_ids.elems[1];
@@ -39,348 +88,212 @@ impl AttestorPrivateContextInterface {
         serialized_args[4] = partition_table.shield_ids.elems[3];
         serialized_args[5] = partition_table.shield_ids.elems[4];
         serialized_args[6] = partition_table.shield_ids.elems[5];
-        serialized_args[7] = partition_table.shield_ids.elems[6];
-        serialized_args[8] = partition_table.shield_ids.elems[7];
-        serialized_args[9] = partition_table.shield_ids.elems[8];
-        serialized_args[10] = partition_table.shield_ids.elems[9];
-        serialized_args[11] = partition_table.attestations.len as Field;
-        serialized_args[12] = partition_table.attestations.elems[0];
-        serialized_args[13] = partition_table.attestations.elems[1];
-        serialized_args[14] = partition_table.attestations.elems[2];
-        serialized_args[15] = partition_table.attestations.elems[3];
-        serialized_args[16] = partition_table.attestations.elems[4];
-        serialized_args[17] = partition_table.attestations.elems[5];
-        serialized_args[18] = partition_table.attestations.elems[6];
-        serialized_args[19] = partition_table.attestations.elems[7];
-        serialized_args[20] = partition_table.attestations.elems[8];
-        serialized_args[21] = partition_table.attestations.elems[9];
-        serialized_args[22] = partition_table.max_block_number as Field;
-        serialized_args[23] = partition_table.is_table_cleared as Field;
-        serialized_args[24] = blacklist_root;
-        serialized_args[25] = proofs[0];
-        serialized_args[26] = proofs[1];
-        serialized_args[27] = proofs[2];
-        serialized_args[28] = proofs[3];
-        serialized_args[29] = proofs[4];
-        serialized_args[30] = proofs[5];
-        serialized_args[31] = proofs[6];
-        serialized_args[32] = proofs[7];
-        serialized_args[33] = proofs[8];
-        serialized_args[34] = proofs[9];
-        serialized_args[35] = proofs[10];
-        serialized_args[36] = proofs[11];
-        serialized_args[37] = proofs[12];
-        serialized_args[38] = proofs[13];
-        serialized_args[39] = proofs[14];
-        serialized_args[40] = proofs[15];
-        serialized_args[41] = proofs[16];
-        serialized_args[42] = proofs[17];
-        serialized_args[43] = proofs[18];
-        serialized_args[44] = proofs[19];
-        serialized_args[45] = proofs[20];
-        serialized_args[46] = proofs[21];
-        serialized_args[47] = proofs[22];
-        serialized_args[48] = proofs[23];
-        serialized_args[49] = proofs[24];
-        serialized_args[50] = proofs[25];
-        serialized_args[51] = proofs[26];
-        serialized_args[52] = proofs[27];
-        serialized_args[53] = proofs[28];
-        serialized_args[54] = proofs[29];
-        serialized_args[55] = proofs[30];
-        serialized_args[56] = proofs[31];
-        serialized_args[57] = proofs[32];
-        serialized_args[58] = proofs[33];
-        serialized_args[59] = proofs[34];
-        serialized_args[60] = proofs[35];
-        serialized_args[61] = proofs[36];
-        serialized_args[62] = proofs[37];
-        serialized_args[63] = proofs[38];
-        serialized_args[64] = proofs[39];
-        serialized_args[65] = proofs[40];
-        serialized_args[66] = proofs[41];
-        serialized_args[67] = proofs[42];
-        serialized_args[68] = proofs[43];
-        serialized_args[69] = proofs[44];
-        serialized_args[70] = proofs[45];
-        serialized_args[71] = proofs[46];
-        serialized_args[72] = proofs[47];
-        serialized_args[73] = proofs[48];
-        serialized_args[74] = proofs[49];
-        serialized_args[75] = proofs[50];
-        serialized_args[76] = proofs[51];
-        serialized_args[77] = proofs[52];
-        serialized_args[78] = proofs[53];
-        serialized_args[79] = proofs[54];
-        serialized_args[80] = proofs[55];
-        serialized_args[81] = proofs[56];
-        serialized_args[82] = proofs[57];
-        serialized_args[83] = proofs[58];
-        serialized_args[84] = proofs[59];
-        serialized_args[85] = proofs[60];
-        serialized_args[86] = proofs[61];
-        serialized_args[87] = proofs[62];
-        serialized_args[88] = proofs[63];
-        serialized_args[89] = proofs[64];
-        serialized_args[90] = proofs[65];
-        serialized_args[91] = proofs[66];
-        serialized_args[92] = proofs[67];
-        serialized_args[93] = proofs[68];
-        serialized_args[94] = proofs[69];
-        serialized_args[95] = proofs[70];
-        serialized_args[96] = proofs[71];
-        serialized_args[97] = proofs[72];
-        serialized_args[98] = proofs[73];
-        serialized_args[99] = proofs[74];
-        serialized_args[100] = proofs[75];
-        serialized_args[101] = proofs[76];
-        serialized_args[102] = proofs[77];
-        serialized_args[103] = proofs[78];
-        serialized_args[104] = proofs[79];
-        serialized_args[105] = proofs[80];
-        serialized_args[106] = proofs[81];
-        serialized_args[107] = proofs[82];
-        serialized_args[108] = proofs[83];
-        serialized_args[109] = proofs[84];
-        serialized_args[110] = proofs[85];
-        serialized_args[111] = proofs[86];
-        serialized_args[112] = proofs[87];
-        serialized_args[113] = proofs[88];
-        serialized_args[114] = proofs[89];
-        serialized_args[115] = proofs[90];
-        serialized_args[116] = proofs[91];
-        serialized_args[117] = proofs[92];
-        serialized_args[118] = proofs[93];
-        serialized_args[119] = proofs[94];
-        serialized_args[120] = proofs[95];
-        serialized_args[121] = proofs[96];
-        serialized_args[122] = proofs[97];
-        serialized_args[123] = proofs[98];
-        serialized_args[124] = proofs[99];
-        serialized_args[125] = proofs[100];
-        serialized_args[126] = proofs[101];
-        serialized_args[127] = proofs[102];
-        serialized_args[128] = proofs[103];
-        serialized_args[129] = proofs[104];
-        serialized_args[130] = proofs[105];
-        serialized_args[131] = proofs[106];
-        serialized_args[132] = proofs[107];
-        serialized_args[133] = proofs[108];
-        serialized_args[134] = proofs[109];
-        serialized_args[135] = proofs[110];
-        serialized_args[136] = proofs[111];
-        serialized_args[137] = proofs[112];
-        serialized_args[138] = proofs[113];
-        serialized_args[139] = proofs[114];
-        serialized_args[140] = proofs[115];
-        serialized_args[141] = proofs[116];
-        serialized_args[142] = proofs[117];
-        serialized_args[143] = proofs[118];
-        serialized_args[144] = proofs[119];
-        serialized_args[145] = proofs[120];
-        serialized_args[146] = proofs[121];
-        serialized_args[147] = proofs[122];
-        serialized_args[148] = proofs[123];
-        serialized_args[149] = proofs[124];
-        serialized_args[150] = proofs[125];
-        serialized_args[151] = proofs[126];
-        serialized_args[152] = proofs[127];
-        serialized_args[153] = proofs[128];
-        serialized_args[154] = proofs[129];
-        serialized_args[155] = proofs[130];
-        serialized_args[156] = proofs[131];
-        serialized_args[157] = proofs[132];
-        serialized_args[158] = proofs[133];
-        serialized_args[159] = proofs[134];
-        serialized_args[160] = proofs[135];
-        serialized_args[161] = proofs[136];
-        serialized_args[162] = proofs[137];
-        serialized_args[163] = proofs[138];
-        serialized_args[164] = proofs[139];
-        serialized_args[165] = proofs[140];
-        serialized_args[166] = proofs[141];
-        serialized_args[167] = proofs[142];
-        serialized_args[168] = proofs[143];
-        serialized_args[169] = proofs[144];
-        serialized_args[170] = proofs[145];
-        serialized_args[171] = proofs[146];
-        serialized_args[172] = proofs[147];
-        serialized_args[173] = proofs[148];
-        serialized_args[174] = proofs[149];
-        serialized_args[175] = proofs[150];
-        serialized_args[176] = proofs[151];
-        serialized_args[177] = proofs[152];
-        serialized_args[178] = proofs[153];
-        serialized_args[179] = proofs[154];
-        serialized_args[180] = proofs[155];
-        serialized_args[181] = proofs[156];
-        serialized_args[182] = proofs[157];
-        serialized_args[183] = proofs[158];
-        serialized_args[184] = proofs[159];
-        serialized_args[185] = proofs[160];
-        serialized_args[186] = proofs[161];
-        serialized_args[187] = proofs[162];
-        serialized_args[188] = proofs[163];
-        serialized_args[189] = proofs[164];
-        serialized_args[190] = proofs[165];
-        serialized_args[191] = proofs[166];
-        serialized_args[192] = proofs[167];
-        serialized_args[193] = proofs[168];
-        serialized_args[194] = proofs[169];
-        serialized_args[195] = proofs[170];
-        serialized_args[196] = proofs[171];
-        serialized_args[197] = proofs[172];
-        serialized_args[198] = proofs[173];
-        serialized_args[199] = proofs[174];
-        serialized_args[200] = proofs[175];
-        serialized_args[201] = proofs[176];
-        serialized_args[202] = proofs[177];
-        serialized_args[203] = proofs[178];
-        serialized_args[204] = proofs[179];
-        serialized_args[205] = proofs[180];
-        serialized_args[206] = proofs[181];
-        serialized_args[207] = proofs[182];
-        serialized_args[208] = proofs[183];
-        serialized_args[209] = proofs[184];
-        serialized_args[210] = proofs[185];
-        serialized_args[211] = proofs[186];
-        serialized_args[212] = proofs[187];
-        serialized_args[213] = proofs[188];
-        serialized_args[214] = proofs[189];
-        serialized_args[215] = proofs[190];
-        serialized_args[216] = proofs[191];
-        serialized_args[217] = proofs[192];
-        serialized_args[218] = proofs[193];
-        serialized_args[219] = proofs[194];
-        serialized_args[220] = proofs[195];
-        serialized_args[221] = proofs[196];
-        serialized_args[222] = proofs[197];
-        serialized_args[223] = proofs[198];
-        serialized_args[224] = proofs[199];
-        serialized_args[225] = proofs[200];
-        serialized_args[226] = proofs[201];
-        serialized_args[227] = proofs[202];
-        serialized_args[228] = proofs[203];
-        serialized_args[229] = proofs[204];
-        serialized_args[230] = proofs[205];
-        serialized_args[231] = proofs[206];
-        serialized_args[232] = proofs[207];
-        serialized_args[233] = proofs[208];
-        serialized_args[234] = proofs[209];
-        serialized_args[235] = proofs[210];
-        serialized_args[236] = proofs[211];
-        serialized_args[237] = proofs[212];
-        serialized_args[238] = proofs[213];
-        serialized_args[239] = proofs[214];
-        serialized_args[240] = proofs[215];
-        serialized_args[241] = proofs[216];
-        serialized_args[242] = proofs[217];
-        serialized_args[243] = proofs[218];
-        serialized_args[244] = proofs[219];
-        serialized_args[245] = proofs[220];
-        serialized_args[246] = proofs[221];
-        serialized_args[247] = proofs[222];
-        serialized_args[248] = proofs[223];
-        serialized_args[249] = proofs[224];
-        serialized_args[250] = proofs[225];
-        serialized_args[251] = proofs[226];
-        serialized_args[252] = proofs[227];
-        serialized_args[253] = proofs[228];
-        serialized_args[254] = proofs[229];
-        serialized_args[255] = proofs[230];
-        serialized_args[256] = proofs[231];
-        serialized_args[257] = proofs[232];
-        serialized_args[258] = proofs[233];
-        serialized_args[259] = proofs[234];
-        serialized_args[260] = proofs[235];
-        serialized_args[261] = proofs[236];
-        serialized_args[262] = proofs[237];
-        serialized_args[263] = proofs[238];
-        serialized_args[264] = proofs[239];
-        serialized_args[265] = proofs[240];
-        serialized_args[266] = proofs[241];
-        serialized_args[267] = proofs[242];
-        serialized_args[268] = proofs[243];
-        serialized_args[269] = proofs[244];
-        serialized_args[270] = proofs[245];
-        serialized_args[271] = proofs[246];
-        serialized_args[272] = proofs[247];
-        serialized_args[273] = proofs[248];
-        serialized_args[274] = proofs[249];
-        serialized_args[275] = proofs[250];
-        serialized_args[276] = proofs[251];
-        serialized_args[277] = proofs[252];
-        serialized_args[278] = proofs[253];
-        serialized_args[279] = proofs[254];
-        serialized_args[280] = proofs[255];
-        serialized_args[281] = proofs[256];
-        serialized_args[282] = proofs[257];
-        serialized_args[283] = proofs[258];
-        serialized_args[284] = proofs[259];
-        serialized_args[285] = proofs[260];
-        serialized_args[286] = proofs[261];
-        serialized_args[287] = proofs[262];
-        serialized_args[288] = proofs[263];
-        serialized_args[289] = proofs[264];
-        serialized_args[290] = proofs[265];
-        serialized_args[291] = proofs[266];
-        serialized_args[292] = proofs[267];
-        serialized_args[293] = proofs[268];
-        serialized_args[294] = proofs[269];
-        serialized_args[295] = proofs[270];
-        serialized_args[296] = proofs[271];
-        serialized_args[297] = proofs[272];
-        serialized_args[298] = proofs[273];
-        serialized_args[299] = proofs[274];
-        serialized_args[300] = proofs[275];
-        serialized_args[301] = proofs[276];
-        serialized_args[302] = proofs[277];
-        serialized_args[303] = proofs[278];
-        serialized_args[304] = proofs[279];
-        serialized_args[305] = proofs[280];
-        serialized_args[306] = proofs[281];
-        serialized_args[307] = proofs[282];
-        serialized_args[308] = proofs[283];
-        serialized_args[309] = proofs[284];
-        serialized_args[310] = proofs[285];
-        serialized_args[311] = proofs[286];
-        serialized_args[312] = proofs[287];
-        serialized_args[313] = proofs[288];
-        serialized_args[314] = proofs[289];
-        serialized_args[315] = proofs[290];
-        serialized_args[316] = proofs[291];
-        serialized_args[317] = proofs[292];
-        serialized_args[318] = proofs[293];
-        serialized_args[319] = proofs[294];
-        serialized_args[320] = proofs[295];
-        serialized_args[321] = proofs[296];
-        serialized_args[322] = proofs[297];
-        serialized_args[323] = proofs[298];
-        serialized_args[324] = proofs[299];
-        serialized_args[325] = proofs[300];
-        serialized_args[326] = proofs[301];
-        serialized_args[327] = proofs[302];
-        serialized_args[328] = proofs[303];
-        serialized_args[329] = proofs[304];
-        serialized_args[330] = proofs[305];
-        serialized_args[331] = proofs[306];
-        serialized_args[332] = proofs[307];
-        serialized_args[333] = proofs[308];
-        serialized_args[334] = proofs[309];
-        serialized_args[335] = proofs[310];
-        serialized_args[336] = proofs[311];
-        serialized_args[337] = proofs[312];
-        serialized_args[338] = proofs[313];
-        serialized_args[339] = proofs[314];
-        serialized_args[340] = proofs[315];
-        serialized_args[341] = proofs[316];
-        serialized_args[342] = proofs[317];
-        serialized_args[343] = proofs[318];
-        serialized_args[344] = proofs[319];
+        serialized_args[7] = partition_table.attestations.len as Field;
+        serialized_args[8] = partition_table.attestations.elems[0];
+        serialized_args[9] = partition_table.attestations.elems[1];
+        serialized_args[10] = partition_table.attestations.elems[2];
+        serialized_args[11] = partition_table.attestations.elems[3];
+        serialized_args[12] = partition_table.attestations.elems[4];
+        serialized_args[13] = partition_table.attestations.elems[5];
+        serialized_args[14] = partition_table.max_block_number as Field;
+        serialized_args[15] = partition_table.is_table_cleared as Field;
+        serialized_args[16] = blacklist_root;
+        serialized_args[17] = proofs[0];
+        serialized_args[18] = proofs[1];
+        serialized_args[19] = proofs[2];
+        serialized_args[20] = proofs[3];
+        serialized_args[21] = proofs[4];
+        serialized_args[22] = proofs[5];
+        serialized_args[23] = proofs[6];
+        serialized_args[24] = proofs[7];
+        serialized_args[25] = proofs[8];
+        serialized_args[26] = proofs[9];
+        serialized_args[27] = proofs[10];
+        serialized_args[28] = proofs[11];
+        serialized_args[29] = proofs[12];
+        serialized_args[30] = proofs[13];
+        serialized_args[31] = proofs[14];
+        serialized_args[32] = proofs[15];
+        serialized_args[33] = proofs[16];
+        serialized_args[34] = proofs[17];
+        serialized_args[35] = proofs[18];
+        serialized_args[36] = proofs[19];
+        serialized_args[37] = proofs[20];
+        serialized_args[38] = proofs[21];
+        serialized_args[39] = proofs[22];
+        serialized_args[40] = proofs[23];
+        serialized_args[41] = proofs[24];
+        serialized_args[42] = proofs[25];
+        serialized_args[43] = proofs[26];
+        serialized_args[44] = proofs[27];
+        serialized_args[45] = proofs[28];
+        serialized_args[46] = proofs[29];
+        serialized_args[47] = proofs[30];
+        serialized_args[48] = proofs[31];
+        serialized_args[49] = proofs[32];
+        serialized_args[50] = proofs[33];
+        serialized_args[51] = proofs[34];
+        serialized_args[52] = proofs[35];
+        serialized_args[53] = proofs[36];
+        serialized_args[54] = proofs[37];
+        serialized_args[55] = proofs[38];
+        serialized_args[56] = proofs[39];
+        serialized_args[57] = proofs[40];
+        serialized_args[58] = proofs[41];
+        serialized_args[59] = proofs[42];
+        serialized_args[60] = proofs[43];
+        serialized_args[61] = proofs[44];
+        serialized_args[62] = proofs[45];
+        serialized_args[63] = proofs[46];
+        serialized_args[64] = proofs[47];
+        serialized_args[65] = proofs[48];
+        serialized_args[66] = proofs[49];
+        serialized_args[67] = proofs[50];
+        serialized_args[68] = proofs[51];
+        serialized_args[69] = proofs[52];
+        serialized_args[70] = proofs[53];
+        serialized_args[71] = proofs[54];
+        serialized_args[72] = proofs[55];
+        serialized_args[73] = proofs[56];
+        serialized_args[74] = proofs[57];
+        serialized_args[75] = proofs[58];
+        serialized_args[76] = proofs[59];
+        serialized_args[77] = proofs[60];
+        serialized_args[78] = proofs[61];
+        serialized_args[79] = proofs[62];
+        serialized_args[80] = proofs[63];
+        serialized_args[81] = proofs[64];
+        serialized_args[82] = proofs[65];
+        serialized_args[83] = proofs[66];
+        serialized_args[84] = proofs[67];
+        serialized_args[85] = proofs[68];
+        serialized_args[86] = proofs[69];
+        serialized_args[87] = proofs[70];
+        serialized_args[88] = proofs[71];
+        serialized_args[89] = proofs[72];
+        serialized_args[90] = proofs[73];
+        serialized_args[91] = proofs[74];
+        serialized_args[92] = proofs[75];
+        serialized_args[93] = proofs[76];
+        serialized_args[94] = proofs[77];
+        serialized_args[95] = proofs[78];
+        serialized_args[96] = proofs[79];
+        serialized_args[97] = proofs[80];
+        serialized_args[98] = proofs[81];
+        serialized_args[99] = proofs[82];
+        serialized_args[100] = proofs[83];
+        serialized_args[101] = proofs[84];
+        serialized_args[102] = proofs[85];
+        serialized_args[103] = proofs[86];
+        serialized_args[104] = proofs[87];
+        serialized_args[105] = proofs[88];
+        serialized_args[106] = proofs[89];
+        serialized_args[107] = proofs[90];
+        serialized_args[108] = proofs[91];
+        serialized_args[109] = proofs[92];
+        serialized_args[110] = proofs[93];
+        serialized_args[111] = proofs[94];
+        serialized_args[112] = proofs[95];
+        serialized_args[113] = proofs[96];
+        serialized_args[114] = proofs[97];
+        serialized_args[115] = proofs[98];
+        serialized_args[116] = proofs[99];
+        serialized_args[117] = proofs[100];
+        serialized_args[118] = proofs[101];
+        serialized_args[119] = proofs[102];
+        serialized_args[120] = proofs[103];
+        serialized_args[121] = proofs[104];
+        serialized_args[122] = proofs[105];
+        serialized_args[123] = proofs[106];
+        serialized_args[124] = proofs[107];
+        serialized_args[125] = proofs[108];
+        serialized_args[126] = proofs[109];
+        serialized_args[127] = proofs[110];
+        serialized_args[128] = proofs[111];
+        serialized_args[129] = proofs[112];
+        serialized_args[130] = proofs[113];
+        serialized_args[131] = proofs[114];
+        serialized_args[132] = proofs[115];
+        serialized_args[133] = proofs[116];
+        serialized_args[134] = proofs[117];
+        serialized_args[135] = proofs[118];
+        serialized_args[136] = proofs[119];
+        serialized_args[137] = proofs[120];
+        serialized_args[138] = proofs[121];
+        serialized_args[139] = proofs[122];
+        serialized_args[140] = proofs[123];
+        serialized_args[141] = proofs[124];
+        serialized_args[142] = proofs[125];
+        serialized_args[143] = proofs[126];
+        serialized_args[144] = proofs[127];
+        serialized_args[145] = proofs[128];
+        serialized_args[146] = proofs[129];
+        serialized_args[147] = proofs[130];
+        serialized_args[148] = proofs[131];
+        serialized_args[149] = proofs[132];
+        serialized_args[150] = proofs[133];
+        serialized_args[151] = proofs[134];
+        serialized_args[152] = proofs[135];
+        serialized_args[153] = proofs[136];
+        serialized_args[154] = proofs[137];
+        serialized_args[155] = proofs[138];
+        serialized_args[156] = proofs[139];
+        serialized_args[157] = proofs[140];
+        serialized_args[158] = proofs[141];
+        serialized_args[159] = proofs[142];
+        serialized_args[160] = proofs[143];
+        serialized_args[161] = proofs[144];
+        serialized_args[162] = proofs[145];
+        serialized_args[163] = proofs[146];
+        serialized_args[164] = proofs[147];
+        serialized_args[165] = proofs[148];
+        serialized_args[166] = proofs[149];
+        serialized_args[167] = proofs[150];
+        serialized_args[168] = proofs[151];
+        serialized_args[169] = proofs[152];
+        serialized_args[170] = proofs[153];
+        serialized_args[171] = proofs[154];
+        serialized_args[172] = proofs[155];
+        serialized_args[173] = proofs[156];
+        serialized_args[174] = proofs[157];
+        serialized_args[175] = proofs[158];
+        serialized_args[176] = proofs[159];
+        serialized_args[177] = proofs[160];
+        serialized_args[178] = proofs[161];
+        serialized_args[179] = proofs[162];
+        serialized_args[180] = proofs[163];
+        serialized_args[181] = proofs[164];
+        serialized_args[182] = proofs[165];
+        serialized_args[183] = proofs[166];
+        serialized_args[184] = proofs[167];
+        serialized_args[185] = proofs[168];
+        serialized_args[186] = proofs[169];
+        serialized_args[187] = proofs[170];
+        serialized_args[188] = proofs[171];
+        serialized_args[189] = proofs[172];
+        serialized_args[190] = proofs[173];
+        serialized_args[191] = proofs[174];
+        serialized_args[192] = proofs[175];
+        serialized_args[193] = proofs[176];
+        serialized_args[194] = proofs[177];
+        serialized_args[195] = proofs[178];
+        serialized_args[196] = proofs[179];
+        serialized_args[197] = proofs[180];
+        serialized_args[198] = proofs[181];
+        serialized_args[199] = proofs[182];
+        serialized_args[200] = proofs[183];
+        serialized_args[201] = proofs[184];
+        serialized_args[202] = proofs[185];
+        serialized_args[203] = proofs[186];
+        serialized_args[204] = proofs[187];
+        serialized_args[205] = proofs[188];
+        serialized_args[206] = proofs[189];
+        serialized_args[207] = proofs[190];
+        serialized_args[208] = proofs[191];
 
         context.call_private_function(
             self.address,
-            FunctionSelector::from_field(0x2d4a80c3),
+            FunctionSelector::from_field(0x3559d435),
             serialized_args
         )
     }
@@ -431,56 +344,6 @@ impl AttestorPrivateContextInterface {
         context.call_public_function(
             self.address,
             FunctionSelector::from_field(0xe07941f0),
-            serialized_args
-        )
-    }
-
-    pub fn add_to_blacklist(
-        self,
-        context: &mut PrivateContext,
-        token: TokenAddToBlacklistStruct,
-        shield_id: Field,
-        proof: [Field; 32]
-    ) {
-        let mut serialized_args = [0; 34];
-        serialized_args[0] = token.inner;
-        serialized_args[1] = shield_id;
-        serialized_args[2] = proof[0];
-        serialized_args[3] = proof[1];
-        serialized_args[4] = proof[2];
-        serialized_args[5] = proof[3];
-        serialized_args[6] = proof[4];
-        serialized_args[7] = proof[5];
-        serialized_args[8] = proof[6];
-        serialized_args[9] = proof[7];
-        serialized_args[10] = proof[8];
-        serialized_args[11] = proof[9];
-        serialized_args[12] = proof[10];
-        serialized_args[13] = proof[11];
-        serialized_args[14] = proof[12];
-        serialized_args[15] = proof[13];
-        serialized_args[16] = proof[14];
-        serialized_args[17] = proof[15];
-        serialized_args[18] = proof[16];
-        serialized_args[19] = proof[17];
-        serialized_args[20] = proof[18];
-        serialized_args[21] = proof[19];
-        serialized_args[22] = proof[20];
-        serialized_args[23] = proof[21];
-        serialized_args[24] = proof[22];
-        serialized_args[25] = proof[23];
-        serialized_args[26] = proof[24];
-        serialized_args[27] = proof[25];
-        serialized_args[28] = proof[26];
-        serialized_args[29] = proof[27];
-        serialized_args[30] = proof[28];
-        serialized_args[31] = proof[29];
-        serialized_args[32] = proof[30];
-        serialized_args[33] = proof[31];
-
-        context.call_public_function(
-            self.address,
-            FunctionSelector::from_field(0x52e0ac0c),
             serialized_args
         )
     }
@@ -496,56 +359,6 @@ impl AttestorPublicContextInterface {
         Self { address }
     }
 
-    pub fn remove_from_blacklist(
-        self,
-        context: &mut PublicContext,
-        token: TokenRemoveFromBlacklistStruct,
-        shield_id: Field,
-        proof: [Field; 32]
-    ) -> [Field; RETURN_VALUES_LENGTH] {
-        let mut serialized_args = [0; 34];
-        serialized_args[0] = token.inner;
-        serialized_args[1] = shield_id;
-        serialized_args[2] = proof[0];
-        serialized_args[3] = proof[1];
-        serialized_args[4] = proof[2];
-        serialized_args[5] = proof[3];
-        serialized_args[6] = proof[4];
-        serialized_args[7] = proof[5];
-        serialized_args[8] = proof[6];
-        serialized_args[9] = proof[7];
-        serialized_args[10] = proof[8];
-        serialized_args[11] = proof[9];
-        serialized_args[12] = proof[10];
-        serialized_args[13] = proof[11];
-        serialized_args[14] = proof[12];
-        serialized_args[15] = proof[13];
-        serialized_args[16] = proof[14];
-        serialized_args[17] = proof[15];
-        serialized_args[18] = proof[16];
-        serialized_args[19] = proof[17];
-        serialized_args[20] = proof[18];
-        serialized_args[21] = proof[19];
-        serialized_args[22] = proof[20];
-        serialized_args[23] = proof[21];
-        serialized_args[24] = proof[22];
-        serialized_args[25] = proof[23];
-        serialized_args[26] = proof[24];
-        serialized_args[27] = proof[25];
-        serialized_args[28] = proof[26];
-        serialized_args[29] = proof[27];
-        serialized_args[30] = proof[28];
-        serialized_args[31] = proof[29];
-        serialized_args[32] = proof[30];
-        serialized_args[33] = proof[31];
-
-        context.call_public_function(
-            self.address,
-            FunctionSelector::from_field(0xe07941f0),
-            serialized_args
-        )
-    }
-
     pub fn add_to_blacklist(
         self,
         context: &mut PublicContext,
@@ -592,6 +405,56 @@ impl AttestorPublicContextInterface {
         context.call_public_function(
             self.address,
             FunctionSelector::from_field(0x52e0ac0c),
+            serialized_args
+        )
+    }
+
+    pub fn remove_from_blacklist(
+        self,
+        context: &mut PublicContext,
+        token: TokenRemoveFromBlacklistStruct,
+        shield_id: Field,
+        proof: [Field; 32]
+    ) -> [Field; RETURN_VALUES_LENGTH] {
+        let mut serialized_args = [0; 34];
+        serialized_args[0] = token.inner;
+        serialized_args[1] = shield_id;
+        serialized_args[2] = proof[0];
+        serialized_args[3] = proof[1];
+        serialized_args[4] = proof[2];
+        serialized_args[5] = proof[3];
+        serialized_args[6] = proof[4];
+        serialized_args[7] = proof[5];
+        serialized_args[8] = proof[6];
+        serialized_args[9] = proof[7];
+        serialized_args[10] = proof[8];
+        serialized_args[11] = proof[9];
+        serialized_args[12] = proof[10];
+        serialized_args[13] = proof[11];
+        serialized_args[14] = proof[12];
+        serialized_args[15] = proof[13];
+        serialized_args[16] = proof[14];
+        serialized_args[17] = proof[15];
+        serialized_args[18] = proof[16];
+        serialized_args[19] = proof[17];
+        serialized_args[20] = proof[18];
+        serialized_args[21] = proof[19];
+        serialized_args[22] = proof[20];
+        serialized_args[23] = proof[21];
+        serialized_args[24] = proof[22];
+        serialized_args[25] = proof[23];
+        serialized_args[26] = proof[24];
+        serialized_args[27] = proof[25];
+        serialized_args[28] = proof[26];
+        serialized_args[29] = proof[27];
+        serialized_args[30] = proof[28];
+        serialized_args[31] = proof[29];
+        serialized_args[32] = proof[30];
+        serialized_args[33] = proof[31];
+
+        context.call_public_function(
+            self.address,
+            FunctionSelector::from_field(0xe07941f0),
             serialized_args
         )
     }
