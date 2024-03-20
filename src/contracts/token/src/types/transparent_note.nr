@@ -1,6 +1,9 @@
 // docs:start:token_types_all
 use dep::aztec::prelude::{NoteHeader, NoteInterface, PrivateContext};
-use dep::aztec::{note::{utils::compute_note_hash_for_consumption}, hash::{compute_secret_hash, pedersen_hash}};
+use dep::aztec::{
+    note::{note_getter_options::PropertySelector, utils::compute_note_hash_for_consumption},
+    hash::{compute_secret_hash, pedersen_hash}
+};
 
 global TRANSPARENT_NOTE_LEN: Field = 2;
 
@@ -13,6 +16,11 @@ struct TransparentNote {
     secret: Field,
     // header is just here to satisfy the NoteInterface
     header: NoteHeader,
+}
+
+struct TransparentNoteProperties {
+    amount: PropertySelector,
+    secret_hash: PropertySelector,
 }
 
 impl NoteInterface<TRANSPARENT_NOTE_LEN> for TransparentNote {
@@ -82,6 +90,14 @@ impl TransparentNote {
     pub fn knows_secret(self, secret: Field) {
         let hash = compute_secret_hash(secret);
         assert(self.secret_hash == hash);
+    }
+
+    // Custom serialization forces us to manually create the metadata struct and its getter
+    pub fn properties() -> TransparentNoteProperties {
+        TransparentNoteProperties {
+            amount: PropertySelector { index: 0, offset: 0, length: 32 },
+            secret_hash: PropertySelector { index: 1, offset: 0, length: 32 }
+        }
     }
 }
 // docs:end:token_types_all

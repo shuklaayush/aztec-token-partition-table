@@ -1206,7 +1206,6 @@ describe('e2e_token_contract', () => {
         let root = await attestor.methods.get_blacklist_root(accounts[0]).view();
         const proofs = await attestorSim.getSiblingPaths(asset.address, shieldIds);
 
-        console.log(accounts[0].address, attestor.address, root, proofs.flat().length, 0);
         await asset.methods
           .request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0)
           .send()
@@ -1228,7 +1227,6 @@ describe('e2e_token_contract', () => {
         let root = await attestor.methods.get_blacklist_root(asset.address).view();
         const proofs = await attestorSim.getSiblingPaths(asset.address, shieldIds);
 
-        console.log(accounts[0].address, attestor.address, root, proofs.flat().length, 0);
         await asset.methods
           .request_attestation(accounts[0].address, attestor.address, root, proofs.flat(), 0)
           .send()
