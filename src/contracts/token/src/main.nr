@@ -357,13 +357,16 @@ contract Token {
         }
 
         let maybe_note = storage.balances.last_unattested_note(from, attestor);
+        let mut attested = false;
+
         if maybe_note.is_some() {
             let note = maybe_note.unwrap_unchecked();
 
-            let attested = Attestor::at(attestor).request_attestation(&mut context, note.partition_table, blacklist_root, proofs)[0] as bool;
-            if attested {
-                storage.balances.add_attestation(from, note, attestor);
-            }
+            attested = Attestor::at(attestor).request_attestation(&mut context, note.partition_table, blacklist_root, proofs)[0] as bool;
+        }
+
+        if attested {
+            storage.balances.add_attestation(from, maybe_note.unwrap(), attestor);
         }
     }
 

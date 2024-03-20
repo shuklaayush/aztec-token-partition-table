@@ -9,13 +9,17 @@ global TRANSPARENT_NOTE_LEN: Field = 2;
 
 // Transparent note represents a note that is created in the clear (public execution),
 // but can only be spent by those that know the preimage of the "secret_hash"
+#[aztec(note)]
 struct TransparentNote {
     amount: Field,
     secret_hash: Field,
     // the secret is just here for ease of use and won't be (de)serialized
     secret: Field,
-    // header is just here to satisfy the NoteInterface
-    header: NoteHeader,
+}
+
+struct TransparentNoteProperties {
+    amount: PropertySelector,
+    secret_hash: PropertySelector,
 }
 
 struct TransparentNoteProperties {
@@ -24,10 +28,13 @@ struct TransparentNoteProperties {
 }
 
 impl NoteInterface<TRANSPARENT_NOTE_LEN> for TransparentNote {
+
+    // Custom serialization to avoid disclosing the secret field
     fn serialize_content(self) -> [Field; TRANSPARENT_NOTE_LEN] {
         [self.amount, self.secret_hash]
     }
 
+    // Custom deserialization since we don't have access to the secret plaintext
     fn deserialize_content(serialized_note: [Field; TRANSPARENT_NOTE_LEN]) -> Self {
         TransparentNote {
             amount: serialized_note[0],
@@ -35,11 +42,6 @@ impl NoteInterface<TRANSPARENT_NOTE_LEN> for TransparentNote {
             secret: 0,
             header: NoteHeader::empty(),
         }
-    }
-
-    fn compute_note_content_hash(self) -> Field {
-        // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash(self.serialize_content(), 0)
     }
 
     fn compute_nullifier(self, _context: &mut PrivateContext) -> Field {
@@ -52,22 +54,8 @@ impl NoteInterface<TRANSPARENT_NOTE_LEN> for TransparentNote {
         pedersen_hash([self.secret, siloed_note_hash],0)
     }
 
-    fn set_header(&mut self, header: NoteHeader) {
-        self.header = header;
-    }
-
-    fn get_header(self) -> NoteHeader {
-        self.header
-    }
-
     fn broadcast(self, context: &mut PrivateContext, slot: Field) {
         assert(false, "TransparentNote does not support broadcast");
-    }
-
-    fn get_note_type_id() -> Field {
-        // TODO(#4519): autogenerate
-        // python -c "print(int(''.join(str(ord(c)) for c in 'TransparentNote')))"
-        84114971101151129711410111011678111116101
     }
 }
 

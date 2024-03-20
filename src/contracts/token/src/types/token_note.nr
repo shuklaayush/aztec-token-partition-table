@@ -16,6 +16,7 @@ trait OwnedNote {
 
 global TOKEN_NOTE_LEN: u64 = 3 + PARTITION_TABLE_LEN;
 
+#[aztec(note)]
 struct TokenNote {
     // the amount of tokens in the note
     amount: U128,
@@ -27,45 +28,9 @@ struct TokenNote {
     randomness: Field,
     // partition table storing merkle hash of the deposit ids contributing to a note
     partition_table: PartitionTable,
-    // the note header (contract_address, nonce, storage_slot)
-    // included in the note such that it becomes part of encrypted logs for later use.
-    header: NoteHeader,
 }
 
 impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
-    fn serialize_content(self) -> [Field; TOKEN_NOTE_LEN] {
-        let mut serialized_note = [0; TOKEN_NOTE_LEN];
-        serialized_note[0] = self.amount.to_field();
-        serialized_note[1] = self.owner.to_field();
-        serialized_note[2] = self.randomness;
-
-        let partition_table_serialized = self.partition_table.serialize();
-        for i in 0..PARTITION_TABLE_LEN {
-            serialized_note[i + 3] = partition_table_serialized[i];
-        }
-
-        serialized_note
-    }
-
-    fn deserialize_content(serialized_note: [Field; TOKEN_NOTE_LEN]) -> Self {
-        let mut partition_table_serialized = [0; PARTITION_TABLE_LEN];
-        for i in 0..PARTITION_TABLE_LEN {
-            partition_table_serialized[i] = serialized_note[i + 3];
-        }
-        Self {
-            amount: U128::from_integer(serialized_note[0]),
-            owner: AztecAddress::from_field(serialized_note[1]),
-            randomness: serialized_note[2],
-            partition_table: PartitionTable::deserialize(partition_table_serialized),
-            header: NoteHeader::empty(),
-        }
-    }
-
-    fn compute_note_content_hash(self) -> Field {
-        // TODO(#1205) Should use a non-zero generator index.
-        pedersen_hash(self.serialize_content(), 0)
-    }
-
     // docs:start:nullifier
     fn compute_nullifier(self, context: &mut PrivateContext) -> Field {
         let note_hash_for_nullify = compute_note_hash_for_consumption(self);
@@ -90,14 +55,6 @@ impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
         ],0)
     }
 
-    fn set_header(&mut self, header: NoteHeader) {
-        self.header = header;
-    }
-
-    fn get_header(self) -> NoteHeader {
-        self.header
-    }
-
     // Broadcasts the note as an encrypted log on L1.
     fn broadcast(self, context: &mut PrivateContext, slot: Field) {
       // We only bother inserting the note if non-empty to save funds on gas.
@@ -112,12 +69,6 @@ impl NoteInterface<TOKEN_NOTE_LEN> for TokenNote {
               self.serialize_content(),
           );
       }
-    }
-
-    fn get_note_type_id() -> Field {
-        // TODO(#4519): autogenerate
-        // python -c "print(int(''.join(str(ord(c)) for c in 'TokenNote')))"
-        8411110710111078111116101
     }
 }
 
