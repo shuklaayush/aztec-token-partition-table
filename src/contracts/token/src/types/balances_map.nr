@@ -179,10 +179,10 @@ impl<T> BalancesMap<T> {
         assert(minuend >= subtrahend == true, "Balance too low");
         // TODO: Getting this error with the following lines
         //       entered unreachable code: Cannot flatten a dynamic array
-        // let diff = minuend.sub(subtrahend);
-        // if diff.gt(U128::min()) {
-        self.add(owner, minuend - subtrahend, pt2);
-        // }
+        let diff = minuend - subtrahend;
+        if diff > U128::from_integer(0) {
+            self.add(owner, diff, pt2);
+        }
 
         pt1
     }
@@ -198,7 +198,7 @@ pub fn filter_notes_min_sum<T, T_SERIALIZED_LEN>(
         if notes[i].is_some() & sum < min_sum {
             let note = notes[i].unwrap_unchecked();
             selected[i] = Option::some(note);
-            sum = sum.add(note.get_amount());
+            sum += note.get_amount();
         }
     }
     selected

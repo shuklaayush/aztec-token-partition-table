@@ -152,8 +152,8 @@ contract Token {
         assert(storage.minters.at(context.msg_sender()).read(), "caller is not minter");
         // docs:end:read_minter
         let amount = U128::from_integer(amount);
-        let new_balance = storage.public_balances.at(to).read().add(amount);
-        let supply = storage.total_supply.read().add(amount);
+        let new_balance = storage.public_balances.at(to).read() + amount;
+        let supply = storage.total_supply.read() + amount;
 
         storage.public_balances.at(to).write(new_balance);
         storage.total_supply.write(supply);
@@ -166,7 +166,7 @@ contract Token {
         assert(storage.minters.at(context.msg_sender()).read(), "caller is not minter");
         let pending_shields = storage.pending_shields;
         let mut note = TransparentNote::new(amount, secret_hash);
-        let supply = storage.total_supply.read().add(U128::from_integer(amount));
+        let supply = storage.total_supply.read() + U128::from_integer(amount);
 
         storage.total_supply.write(supply);
         // docs:start:insert_from_public
@@ -210,7 +210,7 @@ contract Token {
         }
 
         let amount = U128::from_integer(amount);
-        let from_balance = storage.public_balances.at(from).read().sub(amount);
+        let from_balance = storage.public_balances.at(from).read() - amount;
 
         let pending_shields = storage.pending_shields;
         let mut note = TransparentNote::new(amount.to_integer(), secret_hash);
@@ -230,10 +230,10 @@ contract Token {
         }
 
         let amount = U128::from_integer(amount);
-        let from_balance = storage.public_balances.at(from).read().sub(amount);
+        let from_balance = storage.public_balances.at(from).read() - amount;
         storage.public_balances.at(from).write(from_balance);
 
-        let to_balance = storage.public_balances.at(to).read().add(amount);
+        let to_balance = storage.public_balances.at(to).read() + amount;
         storage.public_balances.at(to).write(to_balance);
     }
     // docs:end:transfer_public
@@ -250,10 +250,10 @@ contract Token {
         // docs:end:assert_current_call_valid_authwit_public
 
         let amount = U128::from_integer(amount);
-        let from_balance = storage.public_balances.at(from).read().sub(amount);
+        let from_balance = storage.public_balances.at(from).read() - amount;
         storage.public_balances.at(from).write(from_balance);
 
-        let new_supply = storage.total_supply.read().sub(amount);
+        let new_supply = storage.total_supply.read() - amount;
         storage.total_supply.write(new_supply);
     }
     // docs:end:burn_public
@@ -373,7 +373,7 @@ contract Token {
     #[aztec(public)]
     #[aztec(internal)]
     fn _increase_public_balance(to: AztecAddress, amount: Field) {
-        let new_balance = storage.public_balances.at(to).read().add(U128::from_integer(amount));
+        let new_balance = storage.public_balances.at(to).read() + U128::from_integer(amount);
         storage.public_balances.at(to).write(new_balance);
     }
     // docs:end:increase_public_balance
@@ -383,7 +383,7 @@ contract Token {
     #[aztec(internal)]
     fn _reduce_total_supply(amount: Field) {
         // Only to be called from burn.
-        let new_supply = storage.total_supply.read().sub(U128::from_integer(amount));
+        let new_supply = storage.total_supply.read() - U128::from_integer(amount);
         storage.total_supply.write(new_supply);
     }
     // docs:end:reduce_total_supply

@@ -52,10 +52,8 @@ impl PartitionTable {
     pub fn join(self, other: Self) -> Self {
         if self.is_empty() {
             other
-            // TODO: Getting this error
-            //       cli ERROR PayloadTooLargeError: request entity too large
-            // } else if other.is_empty() {
-            //     self
+        } else if other.is_empty() {
+            self
         } else {
             Self {
                 shield_ids: self.shield_ids.or(other.shield_ids),
